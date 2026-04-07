@@ -36,7 +36,7 @@ const SUBJECTS = {
       ['Exercicios', 'Sugira exercicios praticos e rapidos sobre numeros inteiros'],
       ['Desempenho', 'Como avaliar se a Ana Clara esta progredindo nos estudos?']
     ],
-    test: { name: 'T1 Matematica', date: '2025-04-10', details: '15 questoes: 3 objetivas + 12 desenvolvimento (peso 0,2 cada)' }
+    test: { name: 'T1 Matematica', date: '2026-04-10', details: '15 questoes: 3 objetivas + 12 desenvolvimento (peso 0,2 cada)' }
   },
   portuguese: {
     id: 'portuguese',
@@ -74,7 +74,7 @@ const SUBJECTS = {
       ['Exercicios Praticos', 'Sugira exercicios rapidos de portugues que posso fazer com minha filha hoje a noite'],
       ['Pontos Fracos', 'Quais os topicos de portugues que alunos com TDAH mais tem dificuldade e como ajudar?']
     ],
-    test: { name: 'Prova de Portugues', date: '2026-04-08', details: 'Prova amanha! Revisao intensiva.' }
+    test: { name: 'Prova de Portugues', date: '2026-04-08', details: '08 de Abril - Revisao intensiva!' }
   }
 };
 
@@ -757,7 +757,7 @@ export default function Home() {
 
       <h1 style={{ color: '#fff', fontSize: 48, marginBottom: 8, textAlign: 'center' }}>🧠 EstudaMente</h1>
       <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 18, marginBottom: 8 }}>Plataforma Multidimensional de Estudos</p>
-      <p style={{ color: '#FBBF24', fontSize: 14, marginBottom: 40 }}>📖 Prova de Portugues amanha! | 🧮 T1 Matematica - 10 de Abril</p>
+      <p style={{ color: '#FBBF24', fontSize: 14, marginBottom: 40 }}>📖 Portugues 08/04 | 📜 Historia 09/04 | 🧮 Matematica 10/04</p>
 
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
         <button onClick={() => setRole('student')} style={{
