@@ -44,37 +44,32 @@ const SUBJECTS = {
     emoji: '📖',
     tutorName: 'LetraMente',
     colors: { primary: '#E17055', secondary: '#FDCB6E', bg: 'linear-gradient(135deg, #FFF8F0 0%, #FFF5F5 100%)', header: 'linear-gradient(135deg, #E17055, #FDCB6E)' },
-    systemPrompt: 'Voce e a LetraMente, uma tutora de portugues super paciente e divertida. A aluna e Ana Clara, uma adolescente com TDAH. REGRAS: 1) Respostas CURTAS (maximo 150 palavras). 2) Use emojis com moderacao. 3) Passos numerados. 4) Linguagem simples de adolescente. 5) Sempre encoraje. 6) De exemplos com frases do dia a dia dela. 7) Quando explicar gramatica, use cores mentais: destaque a palavra-chave com MAIUSCULAS.',
-    parentSystemPrompt: 'Voce e um consultor pedagogico especializado em TDAH e lingua portuguesa. Ajude o pai a criar estrategias de estudo de portugues para sua filha adolescente. Seja pratico e objetivo.',
+    systemPrompt: 'Voce e a LetraMente, uma tutora de portugues super paciente e divertida para o 7o ano. A aluna e Ana Clara, uma adolescente com TDAH. O conteudo do T1 e do livro "Entre Herois" Cap 1. REGRAS: 1) Respostas CURTAS (maximo 150 palavras). 2) Use emojis com moderacao. 3) Passos numerados. 4) Linguagem simples de adolescente. 5) Sempre encoraje. 6) De exemplos com frases do dia a dia dela. 7) Quando explicar gramatica, destaque a palavra-chave com MAIUSCULAS. 8) A prova tera 12 objetivas (4 alternativas), 3 esquematicas e 1 discursiva-argumentativa. Pratique esses formatos.',
+    parentSystemPrompt: 'Voce e um consultor pedagogico especializado em TDAH e lingua portuguesa (7o ano). O T1 cobre: Conto lendario, Pontuacao do dialogo, Sintagma, Formacao de palavras (prefixo de negacao) e leitura "Nos: uma antologia de literatura indigena". Livro "Entre Herois" Cap 1. Prova: 12 objetivas (peso 0,15), 3 esquematicas (peso 0,2) e 1 discursiva-argumentativa (peso 0,6). Ajude o pai com estrategias praticas.',
     topics: [
-      { id: 1, name: 'Interpretacao de Texto', emoji: '📰', desc: 'Compreensao e interpretacao textual, inferencias' },
-      { id: 2, name: 'Classes Gramaticais', emoji: '🏷️', desc: 'Substantivo, adjetivo, verbo, advérbio, pronome' },
-      { id: 3, name: 'Tipos de Frase', emoji: '❗', desc: 'Declarativa, interrogativa, exclamativa, imperativa' },
-      { id: 4, name: 'Acentuacao', emoji: '✏️', desc: 'Regras de acentuacao grafica, oxitonas, paroxitonas, proparoxitonas' },
-      { id: 5, name: 'Pontuacao', emoji: '🔣', desc: 'Virgula, ponto, dois-pontos, ponto e virgula, travessao' },
-      { id: 6, name: 'Ortografia', emoji: '🔤', desc: 'Escrita correta, S/SS/C/SC, X/CH, G/J, homônimos' },
-      { id: 7, name: 'Verbos', emoji: '🏃', desc: 'Conjugacao, tempos verbais, modos indicativo, subjuntivo e imperativo' },
-      { id: 8, name: 'Sujeito e Predicado', emoji: '🧩', desc: 'Analise sintatica, tipos de sujeito e predicado' },
-      { id: 9, name: 'Figuras de Linguagem', emoji: '🎭', desc: 'Metafora, comparacao, personificacao, hiperbole, ironia' },
-      { id: 10, name: 'Generos Textuais', emoji: '📚', desc: 'Narrativo, descritivo, dissertativo, carta, cronica, conto' }
+      { id: 1, name: 'Conto Lendario', emoji: '🐉', desc: 'Genero conto lendario - Semana 3, Cap 1 (Entre Herois), pag 7-14' },
+      { id: 2, name: 'Pontuacao do Dialogo', emoji: '💬', desc: 'Pontuacao em dialogos (travessao, virgula, dois-pontos) - Semana 4, pag 18-20' },
+      { id: 3, name: 'Sintagma', emoji: '🧩', desc: 'Sintagma nominal e verbal, estrutura das frases - Semanas 5-6, pag 25-26' },
+      { id: 4, name: 'Prefixo de Negacao', emoji: '🚫', desc: 'Formacao de palavras com prefixos de negacao (in-, des-, a-) - Semana 7, pag 28-29' },
+      { id: 5, name: 'Literatura Indigena', emoji: '🪶', desc: 'Leitura "Nos: uma antologia de literatura indigena" - interpretacao e contexto' }
     ],
     quickActions: [
       { label: '💡 Explicar', prompt: 'Explique este tema de portugues de forma simples, com exemplos do dia a dia, para uma adolescente com TDAH. Use passos numerados curtos.' },
       { label: '📝 Exemplo', prompt: 'Me de exemplos praticos deste tema usando frases simples do cotidiano. Destaque as palavras importantes.' },
       { label: '🧠 Macete', prompt: 'Me de um macete ou dica mnemonica para lembrar esta regra de portugues facilmente.' },
-      { label: '🎮 Quiz', prompt: 'Crie um quiz rapido com 3 questoes de multipla escolha sobre este tema de portugues. Formate bem.' },
+      { label: '🎮 Quiz', prompt: 'Crie um quiz no formato da prova: 3 questoes objetivas com 4 alternativas (a, b, c, d) sobre este tema. Formate bem e diga a resposta depois.' },
+      { label: '📝 Esquematica', prompt: 'Crie uma questao esquematica (preencher, ligar, completar) sobre este tema, no estilo da prova do 7o ano.' },
+      { label: '✍️ Discursiva', prompt: 'Crie uma questao discursiva-argumentativa sobre este tema e me ajude a montar uma resposta passo a passo. Essa e a questao que vale mais na prova (peso 0,6)!' },
       { label: '🐢 Mais devagar', prompt: 'Explique este tema de um jeito ainda mais simples, como se eu tivesse 10 anos.' },
-      { label: '📋 Resumo', prompt: 'Faca um resumo super curto (maximo 5 linhas) dos pontos mais importantes deste tema de portugues.' },
-      { label: '✍️ Ditado', prompt: 'Crie um mini-ditado com 5 palavras dificeis relacionadas a este tema. Depois me diga a resposta.' },
-      { label: '🔍 Erro comum', prompt: 'Quais os erros mais comuns que alunos cometem neste tema? Me mostre como evitar cada um.' }
+      { label: '📋 Resumo', prompt: 'Faca um resumo super curto (maximo 5 linhas) dos pontos mais importantes deste tema de portugues para o T1.' }
     ],
     parentQuickActions: [
-      ['Estrategias TDAH', 'Quais as melhores estrategias de estudo para portugues com TDAH?'],
-      ['Plano Revisao Rapida', 'Crie um plano de revisao intensivo de 1 dia para prova de portugues amanha'],
-      ['Exercicios Praticos', 'Sugira exercicios rapidos de portugues que posso fazer com minha filha hoje a noite'],
-      ['Pontos Fracos', 'Quais os topicos de portugues que alunos com TDAH mais tem dificuldade e como ajudar?']
+      ['Estrategias TDAH', 'Quais as melhores estrategias para estudar Conto Lendario, Pontuacao de Dialogo, Sintagma e Prefixos de Negacao com TDAH?'],
+      ['Plano Revisao Hoje', 'Crie um plano de revisao para HOJE a noite cobrindo os 5 topicos do T1 de portugues. A prova e amanha!'],
+      ['Simular Prova', 'Monte um simulado completo no formato da prova: 4 objetivas, 1 esquematica e 1 discursiva sobre os topicos do T1'],
+      ['Dicas Discursiva', 'Como ajudar minha filha com TDAH a se preparar para a questao discursiva-argumentativa que vale peso 0,6?']
     ],
-    test: { name: 'Prova de Portugues', date: '2026-04-08', details: '08 de Abril - Revisao intensiva!' }
+    test: { name: 'T1 Portugues', date: '2026-04-08', details: '7o ano - Profa Monica | 12 objetivas (peso 0,15) + 3 esquematicas (peso 0,2) + 1 discursiva (peso 0,6) | 4o e 5o periodos' }
   }
 };
 
