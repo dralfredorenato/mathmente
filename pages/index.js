@@ -110,6 +110,53 @@ const SUBJECTS = {
 };
 
 // ============================
+// CONTEXTUAL SUGGESTIONS
+// ============================
+
+function getContextualSuggestions(lastAssistantMessage, selectedTopic, messageCount) {
+  const suggestions = [];
+
+  // Always offer to go deeper
+  suggestions.push({ label: '🔍 Aprofundar', prompt: 'Aprofunde mais esse ultimo ponto. Explique com mais detalhes e exemplos.' });
+
+  // If topic is selected, offer topic-specific actions
+  if (selectedTopic) {
+    suggestions.push({ label: '🎮 Quiz sobre isso', prompt: 'Crie um quiz rapido de 3 questoes sobre o que voce acabou de explicar. Multipla escolha com 4 alternativas.' });
+    suggestions.push({ label: '🧠 Macete', prompt: 'Me de um macete ou dica para memorizar o que voce acabou de explicar.' });
+  }
+
+  // Context-aware based on message content
+  if (lastAssistantMessage) {
+    const msg = lastAssistantMessage.toLowerCase();
+    if (msg.includes('exemplo') || msg.includes('passo')) {
+      suggestions.push({ label: '📝 Outro exemplo', prompt: 'Me de mais um exemplo diferente sobre esse mesmo assunto.' });
+    }
+    if (msg.includes('quiz') || msg.includes('alternativa') || msg.includes('resposta')) {
+      suggestions.push({ label: '🎯 Mais questoes', prompt: 'Crie mais 3 questoes diferentes sobre o mesmo tema, aumentando um pouco a dificuldade.' });
+      suggestions.push({ label: '✅ Corrigir', prompt: 'Me explique a resposta correta de cada questao e por que as outras alternativas estao erradas.' });
+    }
+    if (msg.includes('resumo') || msg.includes('pontos')) {
+      suggestions.push({ label: '🗂️ Mapa mental', prompt: 'Transforme esse resumo em um mapa mental com topicos e subtopicos organizados.' });
+    }
+    if (msg.includes('erro') || msg.includes('errado') || msg.includes('cuidado')) {
+      suggestions.push({ label: '💪 Praticar', prompt: 'Crie exercicios focados exatamente nesses erros comuns para eu praticar.' });
+    }
+  }
+
+  // Progressive flow suggestions
+  if (messageCount >= 4) {
+    suggestions.push({ label: '📋 Resumo geral', prompt: 'Faca um resumo de tudo que estudamos ate agora nessa conversa. Destaque os pontos-chave.' });
+  }
+
+  // Always available
+  suggestions.push({ label: '🐢 Simplificar', prompt: 'Explique isso de um jeito mais simples. Nao entendi bem a ultima explicacao.' });
+  suggestions.push({ label: '➡️ Proximo topico', prompt: 'Ja entendi esse assunto. Me fale sobre o proximo topico importante que devo estudar para a prova.' });
+
+  // Limit to 4 suggestions to keep UI clean
+  return suggestions.slice(0, 4);
+}
+
+// ============================
 // EXERCISE LISTS (Extracted from ionica platform)
 // ============================
 
@@ -499,6 +546,29 @@ function StudentView({ subject, onBack, studentName }) {
         )}
         {messages.map((m, i) => <ChatBubble key={i} role={m.role} content={m.content} primaryColor={config.colors.primary} />)}
         {loading && <div style={{ textAlign: 'center', color: '#9CA3AF' }}>Pensando... 🤔</div>}
+        {!loading && messages.length > 0 && messages[messages.length - 1].role === 'assistant' && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '8px 0', marginBottom: 8 }}>
+            {getContextualSuggestions(
+              messages[messages.length - 1].content,
+              selectedTopic,
+              messages.length
+            ).map((s, i) => (
+              <button key={i} onClick={() => sendMessage(s.prompt)} style={{
+                background: config.colors.primary + '12',
+                border: '1px solid ' + config.colors.primary + '40',
+                borderRadius: 20,
+                padding: '6px 14px',
+                fontSize: 12,
+                cursor: 'pointer',
+                color: config.colors.primary,
+                fontWeight: 600,
+                transition: 'background 0.15s'
+              }}>
+                {s.label}
+              </button>
+            ))}
+          </div>
+        )}
         <div ref={chatEndRef} />
       </div>
 
