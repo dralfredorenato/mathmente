@@ -331,8 +331,9 @@ function ExerciseView({ onBack, onAskAI }) {
 // STUDENT VIEW
 // ============================
 
-function StudentView({ subject, onBack }) {
+function StudentView({ subject, onBack, studentName }) {
   const config = SUBJECTS[subject];
+  const nameContext = studentName ? ' O(a) aluno(a) se chama ' + studentName + '.' : '';
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -376,7 +377,7 @@ function StudentView({ subject, onBack }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: newMessages.map(m => ({ role: m.role, content: m.content })),
-          system: config.systemPrompt + topicContext
+          system: config.systemPrompt + nameContext + topicContext
         })
       });
       const data = await res.json();
@@ -426,7 +427,7 @@ function StudentView({ subject, onBack }) {
             </button>
             <div>
               <h1 style={{ margin: 0, fontSize: 22 }}>{config.emoji} {config.tutorName}</h1>
-              <p style={{ margin: 0, fontSize: 13, opacity: 0.9 }}>Bora estudar!</p>
+              <p style={{ margin: 0, fontSize: 13, opacity: 0.9 }}>{studentName ? 'Oi, ' + studentName + '!' : 'Bora estudar!'}</p>
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
@@ -866,7 +867,7 @@ function PinScreen({ onSuccess, onBack }) {
 // SUBJECT SELECTOR
 // ============================
 
-function SubjectSelector({ role, onSelect, onBack }) {
+function SubjectSelector({ role, onSelect, onBack, studentName }) {
   const subjectList = Object.values(SUBJECTS);
 
   return (
@@ -891,7 +892,7 @@ function SubjectSelector({ role, onSelect, onBack }) {
 
       <h1 style={{ color: '#fff', fontSize: 36, marginBottom: 8, textAlign: 'center' }}>📚 Escolha a Materia</h1>
       <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 16, marginBottom: 40 }}>
-        {role === 'student' ? 'O que vamos estudar hoje?' : 'Qual materia deseja acompanhar?'}
+        {role === 'student' ? (studentName ? 'O que vamos estudar hoje, ' + studentName + '?' : 'O que vamos estudar hoje?') : 'Qual materia deseja acompanhar?'}
       </p>
 
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -958,21 +959,104 @@ function SubjectSelector({ role, onSelect, onBack }) {
 // MAIN APP
 // ============================
 
+function NameScreen({ onSubmit, onBack }) {
+  const [name, setName] = useState('');
+
+  const handleSubmit = () => {
+    if (name.trim()) onSubmit(name.trim());
+  };
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: "'Inter', sans-serif",
+      padding: 20
+    }}>
+      <Head>
+        <title>EstudaMente - Qual seu nome?</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      </Head>
+
+      <div style={{ fontSize: 48, marginBottom: 16 }}>👩‍🎓</div>
+      <h2 style={{ color: '#fff', fontSize: 24, marginBottom: 8 }}>Qual o seu nome?</h2>
+      <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 32 }}>Para personalizar sua experiencia de estudo</p>
+
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+        placeholder="Digite seu nome..."
+        autoFocus
+        style={{
+          width: 280,
+          padding: '14px 20px',
+          borderRadius: 12,
+          border: '2px solid rgba(255,255,255,0.2)',
+          background: 'rgba(255,255,255,0.1)',
+          color: '#fff',
+          fontSize: 18,
+          textAlign: 'center',
+          outline: 'none',
+          marginBottom: 20
+        }}
+      />
+
+      <button onClick={handleSubmit} style={{
+        background: 'linear-gradient(135deg, #6C5CE7, #A855F7)',
+        color: '#fff',
+        border: 'none',
+        borderRadius: 12,
+        padding: '12px 40px',
+        fontSize: 16,
+        fontWeight: 600,
+        cursor: name.trim() ? 'pointer' : 'not-allowed',
+        opacity: name.trim() ? 1 : 0.5,
+        marginBottom: 16
+      }}>
+        Comecar a estudar!
+      </button>
+
+      <button onClick={onBack} style={{
+        background: 'none',
+        border: 'none',
+        color: 'rgba(255,255,255,0.5)',
+        fontSize: 14,
+        cursor: 'pointer',
+        padding: '8px 16px'
+      }}>
+        ← Voltar
+      </button>
+    </div>
+  );
+}
+
 export default function Home() {
   const [role, setRole] = useState(null);
   const [subject, setSubject] = useState(null);
   const [showPin, setShowPin] = useState(false);
+  const [studentName, setStudentName] = useState('');
+  const [showNameScreen, setShowNameScreen] = useState(false);
 
   // Full app with subject selected
   if (role && subject) {
     const onBack = () => setSubject(null);
-    if (role === 'student') return <StudentView subject={subject} onBack={onBack} />;
+    if (role === 'student') return <StudentView subject={subject} onBack={onBack} studentName={studentName} />;
     if (role === 'parent') return <ParentView subject={subject} onBack={onBack} />;
   }
 
   // Subject selector (after role is chosen)
   if (role) {
-    return <SubjectSelector role={role} onSelect={setSubject} onBack={() => setRole(null)} />;
+    return <SubjectSelector role={role} onSelect={setSubject} onBack={() => setRole(null)} studentName={studentName} />;
+  }
+
+  // Name screen for student
+  if (showNameScreen) {
+    return <NameScreen onSubmit={(name) => { setStudentName(name); setRole('student'); setShowNameScreen(false); }} onBack={() => setShowNameScreen(false)} />;
   }
 
   // PIN screen for parent
@@ -1002,7 +1086,7 @@ export default function Home() {
       <p style={{ color: '#FBBF24', fontSize: 14, marginBottom: 40 }}>📖 Portugues 08/04 | 📜 Historia 09/04 | 🧮 Matematica 10/04</p>
 
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
-        <button onClick={() => setRole('student')} style={{
+        <button onClick={() => setShowNameScreen(true)} style={{
           background: 'linear-gradient(135deg, #6C5CE7, #A855F7)',
           color: '#fff',
           border: 'none',
