@@ -70,6 +70,42 @@ const SUBJECTS = {
       ['Dicas Discursiva', 'Como ajudar minha filha com TDAH a se preparar para a questao discursiva-argumentativa que vale peso 0,6?']
     ],
     test: { name: 'T1 Portugues', date: '2026-04-08', details: '7o ano - Profa Monica | 12 objetivas (peso 0,15) + 3 esquematicas (peso 0,2) + 1 discursiva (peso 0,6) | 4o e 5o periodos' }
+  },
+  history: {
+    id: 'history',
+    name: 'Historia',
+    emoji: '📜',
+    tutorName: 'HistoriaMente',
+    colors: { primary: '#8B5E3C', secondary: '#D4A574', bg: 'linear-gradient(135deg, #FFF8F0 0%, #F5EDE3 100%)', header: 'linear-gradient(135deg, #8B5E3C, #D4A574)' },
+    systemPrompt: 'Voce e a HistoriaMente, uma tutora de historia super paciente e divertida para o 7o ano. A aluna e Ana Clara, uma adolescente com TDAH. O conteudo do T1 cobre: Do Imperio Romano ao Mundo Medieval - auge de Roma (Otavio Augusto, Pax Romana), ascensao do Cristianismo (Edito de Milao 313, Edito de Tessalonica 380), crise do seculo III (escassez de escravos, colonato, ruralizacao), povos germanicos ("barbaros", hunos, invasoes), divisao de Roma (395 Teodosio, queda 476 Odoacro), formacao medieval (reinos germanicos, Clovis e os Francos), Imperio Carolingio (Carlos Martel, Pepino o Breve, Carlos Magno coroado 800), Tratado de Verdun 843 (divisao em 3). REGRAS: 1) Respostas CURTAS (maximo 150 palavras). 2) Use emojis com moderacao. 3) Passos numerados. 4) Linguagem simples de adolescente. 5) Sempre encoraje. 6) Use linhas do tempo e comparacoes para facilitar. 7) Destaque DATAS e NOMES importantes em MAIUSCULAS.',
+    parentSystemPrompt: 'Voce e um consultor pedagogico especializado em TDAH e historia (7o ano). O T1 cobre: Imperio Romano (auge, Otavio Augusto, Pax Romana), Cristianismo (perseguicao, Edito de Milao 313, Tessalonica 380), Crise do sec III (escassez escravos, colonato, ruralizacao), Povos Germanicos (barbaros, hunos, invasoes), Divisao de Roma (395 Teodosio, queda 476), Formacao Medieval (reinos germanicos, Clovis, Francos), Imperio Carolingio (Carlos Martel, Pepino, Carlos Magno 800), Tratado de Verdun 843. Ajude o pai com estrategias praticas para TDAH. Foco na relacao entre crise do escravismo, ruralizacao e formacao dos reinos germanicos.',
+    topics: [
+      { id: 1, name: 'Auge de Roma', emoji: '🏛️', desc: 'Otavio Augusto (27 a.C.), Pax Romana, centralizacao, latim, estradas e infraestrutura' },
+      { id: 2, name: 'Cristianismo', emoji: '✝️', desc: 'Jesus, perseguicoes, Edito de Milao (313 Constantino), Edito de Tessalonica (380 Teodosio)' },
+      { id: 3, name: 'Crise do Seculo III', emoji: '📉', desc: 'Fim das conquistas, escassez de escravos, impostos, inflacao, ruralizacao e colonato' },
+      { id: 4, name: 'Povos Germanicos', emoji: '⚔️', desc: '"Barbaros", trocas comerciais, pressao dos Hunos, invasoes (visigodos, ostrogodos, francos)' },
+      { id: 5, name: 'Divisao e Queda de Roma', emoji: '💔', desc: 'Divisao 395 (Teodosio), Ocidente x Oriente, queda 476 (Odoacro depoe Romulo Augusto)' },
+      { id: 6, name: 'Mundo Medieval', emoji: '🏰', desc: 'Alta Idade Media, reinos germanicos, Clovis e os Francos, conversao ao cristianismo (496)' },
+      { id: 7, name: 'Imperio Carolingio', emoji: '👑', desc: 'Carlos Martel (732), Pepino o Breve, Carlos Magno coroado imperador (800), Renascimento Carolingio' },
+      { id: 8, name: 'Tratado de Verdun', emoji: '📄', desc: 'Divisao do imperio em 843: Carlos Calvo (Franca), Luis Germanico (Alemanha), Lotario (centro)' }
+    ],
+    quickActions: [
+      { label: '💡 Explicar', prompt: 'Explique este tema de historia de forma simples, com uma linha do tempo visual, para uma adolescente com TDAH. Use passos numerados curtos.' },
+      { label: '📝 Exemplo', prompt: 'Me de exemplos concretos e curiosidades sobre este periodo historico. Use comparacoes com coisas do dia a dia para facilitar.' },
+      { label: '🧠 Macete', prompt: 'Me de um macete ou dica mnemonica para lembrar as datas e nomes importantes deste tema.' },
+      { label: '🎮 Quiz', prompt: 'Crie um quiz rapido com 3 questoes de multipla escolha sobre este tema de historia. Formate bem com 4 alternativas cada.' },
+      { label: '📅 Linha do Tempo', prompt: 'Monte uma linha do tempo visual e resumida dos eventos mais importantes deste tema, com datas e o que aconteceu em cada uma.' },
+      { label: '🔗 Causa e Efeito', prompt: 'Explique as relacoes de CAUSA e EFEITO deste tema. O que causou o que? Use setas ou numeracao para ficar claro.' },
+      { label: '🐢 Mais devagar', prompt: 'Explique este tema de um jeito ainda mais simples, como se eu tivesse 10 anos. Use uma historia ou analogia.' },
+      { label: '📋 Resumo', prompt: 'Faca um resumo super curto (maximo 5 linhas) dos pontos mais importantes deste tema para o T1 de historia.' }
+    ],
+    parentQuickActions: [
+      ['Estrategias TDAH', 'Quais as melhores estrategias para estudar historia (Imperio Romano ao Medieval) com TDAH? Foco em datas e sequencia de eventos.'],
+      ['Plano Revisao Hoje', 'Crie um plano de revisao para hoje cobrindo os 8 topicos do T1 de historia (Roma ate Tratado de Verdun). A prova e amanha!'],
+      ['Simular Prova', 'Monte um simulado de historia com questoes sobre: auge de Roma, Cristianismo, crise sec III, povos germanicos, queda de Roma, mundo medieval, Carolingios e Tratado de Verdun.'],
+      ['Conexoes-Chave', 'Explique as conexoes entre crise do escravismo, ruralizacao e formacao dos reinos germanicos - esse e o ponto central da transicao Antiguidade-Medieval.']
+    ],
+    test: { name: 'T1 Historia', date: '2026-04-09', details: '7o ano | Do Imperio Romano ao Mundo Medieval | Foco: crise do escravismo, ruralizacao e formacao dos reinos germanicos' }
   }
 };
 
