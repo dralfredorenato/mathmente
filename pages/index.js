@@ -391,11 +391,156 @@ function ParentView() {
   );
 }
 
+const PARENT_PIN = '0608';
+
+function PinScreen({ onSuccess, onBack }) {
+  const [pin, setPin] = useState('');
+  const [error, setError] = useState(false);
+  const [shake, setShake] = useState(false);
+
+  const handleDigit = (digit) => {
+    if (pin.length >= 4) return;
+    const newPin = pin + digit;
+    setPin(newPin);
+    setError(false);
+    if (newPin.length === 4) {
+      if (newPin === PARENT_PIN) {
+        onSuccess();
+      } else {
+        setError(true);
+        setShake(true);
+        setTimeout(() => { setPin(''); setShake(false); }, 600);
+      }
+    }
+  };
+
+  const handleDelete = () => {
+    setPin(pin.slice(0, -1));
+    setError(false);
+  };
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: "'Inter', sans-serif",
+      padding: 20
+    }}>
+      <Head>
+        <title>MathMente - Acesso do Pai</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      </Head>
+
+      <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+      <h2 style={{ color: '#fff', fontSize: 24, marginBottom: 8 }}>Acesso do Pai</h2>
+      <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 32 }}>Digite o PIN de 4 digitos</p>
+
+      {/* PIN dots */}
+      <div style={{
+        display: 'flex',
+        gap: 16,
+        marginBottom: 12,
+        animation: shake ? 'shake 0.4s ease-in-out' : 'none'
+      }}>
+        {[0, 1, 2, 3].map(i => (
+          <div key={i} style={{
+            width: 20,
+            height: 20,
+            borderRadius: '50%',
+            border: '2px solid rgba(255,255,255,0.4)',
+            background: i < pin.length
+              ? (error ? '#EF4444' : '#FBBF24')
+              : 'transparent',
+            transition: 'background 0.15s'
+          }} />
+        ))}
+      </div>
+
+      {error && (
+        <p style={{ color: '#EF4444', fontSize: 13, marginBottom: 8, height: 20 }}>PIN incorreto. Tente novamente.</p>
+      )}
+      {!error && <div style={{ height: 20, marginBottom: 8 }} />}
+
+      {/* Numpad */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 72px)', gap: 12, marginBottom: 20 }}>
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
+          <button key={n} onClick={() => handleDigit(String(n))} style={{
+            width: 72,
+            height: 72,
+            borderRadius: '50%',
+            border: '1px solid rgba(255,255,255,0.2)',
+            background: 'rgba(255,255,255,0.08)',
+            color: '#fff',
+            fontSize: 28,
+            fontWeight: 600,
+            cursor: 'pointer',
+            transition: 'background 0.15s'
+          }}>
+            {n}
+          </button>
+        ))}
+        <div />
+        <button onClick={() => handleDigit('0')} style={{
+          width: 72,
+          height: 72,
+          borderRadius: '50%',
+          border: '1px solid rgba(255,255,255,0.2)',
+          background: 'rgba(255,255,255,0.08)',
+          color: '#fff',
+          fontSize: 28,
+          fontWeight: 600,
+          cursor: 'pointer',
+          transition: 'background 0.15s'
+        }}>
+          0
+        </button>
+        <button onClick={handleDelete} style={{
+          width: 72,
+          height: 72,
+          borderRadius: '50%',
+          border: 'none',
+          background: 'transparent',
+          color: 'rgba(255,255,255,0.6)',
+          fontSize: 20,
+          cursor: 'pointer'
+        }}>
+          ⌫
+        </button>
+      </div>
+
+      <button onClick={onBack} style={{
+        background: 'none',
+        border: 'none',
+        color: 'rgba(255,255,255,0.5)',
+        fontSize: 14,
+        cursor: 'pointer',
+        padding: '8px 16px'
+      }}>
+        ← Voltar
+      </button>
+
+      <style jsx>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-10px); }
+          40%, 80% { transform: translateX(10px); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default function Home() {
   const [role, setRole] = useState(null);
+  const [showPin, setShowPin] = useState(false);
 
   if (role === 'student') return <StudentView />;
   if (role === 'parent') return <ParentView />;
+  if (showPin) return <PinScreen onSuccess={() => setRole('parent')} onBack={() => setShowPin(false)} />;
 
   return (
     <div style={{
@@ -436,7 +581,7 @@ export default function Home() {
           <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>Modo Aluna</div>
         </button>
 
-        <button onClick={() => setRole('parent')} style={{
+        <button onClick={() => setShowPin(true)} style={{
           background: 'linear-gradient(135deg, #1E3A5F, #2D5F8B)',
           color: '#fff',
           border: 'none',
