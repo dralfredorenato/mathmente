@@ -93,7 +93,7 @@ const SUBJECTS = {
       { label: '💡 Explicar', prompt: 'Explique este tema de historia de forma simples, com uma linha do tempo visual. Use passos numerados curtos.' },
       { label: '📝 Exemplo', prompt: 'Me de exemplos concretos e curiosidades sobre este periodo historico. Use comparacoes com coisas do dia a dia para facilitar.' },
       { label: '🧠 Macete', prompt: 'Me de um macete ou dica mnemonica para lembrar as datas e nomes importantes deste tema.' },
-      { label: '🎮 Quiz', prompt: 'Crie um quiz rapido com 3 questoes de multipla escolha sobre este tema de historia. Formate bem com 4 alternativas cada.' },
+      { label: '🎮 Quiz', prompt: 'Crie um quiz com 5 questoes de multipla escolha sobre este tema de historia, com nivel de dificuldade ALTO para 7o ano. As questoes devem exigir INTERPRETACAO e ANALISE, nao apenas memorizacao. Inclua: 1) questoes que relacionem CAUSAS e CONSEQUENCIAS, 2) questoes com alternativas parecidas que exijam atencao aos detalhes (datas, nomes, eventos), 3) pelo menos 1 questao que conecte este tema com outros temas do T1. Formate com 4 alternativas cada e indique a resposta correta com explicacao breve.' },
       { label: '📅 Linha do Tempo', prompt: 'Monte uma linha do tempo visual e resumida dos eventos mais importantes deste tema, com datas e o que aconteceu em cada uma.' },
       { label: '🔗 Causa e Efeito', prompt: 'Explique as relacoes de CAUSA e EFEITO deste tema. O que causou o que? Use setas ou numeracao para ficar claro.' },
       { label: '🐢 Mais devagar', prompt: 'Explique este tema de um jeito ainda mais simples, como se eu tivesse 10 anos. Use uma historia ou analogia.' },
@@ -102,7 +102,7 @@ const SUBJECTS = {
     parentQuickActions: [
       ['Estrategias de Estudo', 'Quais as melhores estrategias para estudar historia (Imperio Romano ao Medieval)? Foco em datas e sequencia de eventos.'],
       ['Plano Revisao Hoje', 'Crie um plano de revisao para hoje cobrindo os 8 topicos do T1 de historia (Roma ate Tratado de Verdun). A prova e amanha!'],
-      ['Simular Prova', 'Monte um simulado de historia com questoes sobre: auge de Roma, Cristianismo, crise sec III, povos germanicos, queda de Roma, mundo medieval, Carolingios e Tratado de Verdun.'],
+      ['Simular Prova', 'Monte um simulado COMPLETO de historia com 10 questoes de nivel DIFICIL cobrindo todos os 8 temas do T1: auge de Roma, Cristianismo, crise sec III, povos germanicos, queda de Roma, mundo medieval, Carolingios e Tratado de Verdun. As questoes devem exigir ANALISE CRITICA, relacao entre causas e consequencias, e conexoes entre os temas. Inclua alternativas com pegadinhas sutis (datas e nomes parecidos). Formate como prova real com gabarito comentado ao final.'],
       ['Conexoes-Chave', 'Explique as conexoes entre crise do escravismo, ruralizacao e formacao dos reinos germanicos - esse e o ponto central da transicao Antiguidade-Medieval.']
     ],
     test: { name: 'T1 Historia', date: '2026-04-09', details: '7o ano | Do Imperio Romano ao Mundo Medieval | Foco: crise do escravismo, ruralizacao e formacao dos reinos germanicos' }
@@ -121,7 +121,7 @@ function getContextualSuggestions(lastAssistantMessage, selectedTopic, messageCo
 
   // If topic is selected, offer topic-specific actions
   if (selectedTopic) {
-    suggestions.push({ label: '🎮 Quiz sobre isso', prompt: 'Crie um quiz rapido de 3 questoes sobre o que voce acabou de explicar. Multipla escolha com 4 alternativas.' });
+    suggestions.push({ label: '🎮 Quiz sobre isso', prompt: 'Crie um quiz de 5 questoes de nivel DIFICIL sobre o que voce acabou de explicar. Use questoes que exijam analise e interpretacao, com alternativas parecidas que testem atencao. Inclua questoes de causa e efeito. Multipla escolha com 4 alternativas e resposta comentada.' });
     suggestions.push({ label: '🧠 Macete', prompt: 'Me de um macete ou dica para memorizar o que voce acabou de explicar.' });
   }
 
@@ -132,7 +132,7 @@ function getContextualSuggestions(lastAssistantMessage, selectedTopic, messageCo
       suggestions.push({ label: '📝 Outro exemplo', prompt: 'Me de mais um exemplo diferente sobre esse mesmo assunto.' });
     }
     if (msg.includes('quiz') || msg.includes('alternativa') || msg.includes('resposta')) {
-      suggestions.push({ label: '🎯 Mais questoes', prompt: 'Crie mais 3 questoes diferentes sobre o mesmo tema, aumentando um pouco a dificuldade.' });
+      suggestions.push({ label: '🎯 Mais questoes', prompt: 'Crie mais 5 questoes diferentes sobre o mesmo tema, com dificuldade AINDA MAIOR. Use questoes que misturem temas, exijam analise de causa e efeito, e tenham alternativas com pegadinhas sutis. Inclua pelo menos 1 questao que exija comparar periodos ou eventos diferentes.' });
       suggestions.push({ label: '✅ Corrigir', prompt: 'Me explique a resposta correta de cada questao e por que as outras alternativas estao erradas.' });
     }
     if (msg.includes('resumo') || msg.includes('pontos')) {
