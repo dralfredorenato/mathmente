@@ -385,11 +385,24 @@ function StudentView({ subject, onBack, studentName }) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState(null);
-  const [xp, setXp] = useState(0);
+  const [xp, setXp] = useState(() => getXp());
   const [pomodoroActive, setPomodoroActive] = useState(false);
   const [pomodoroTime, setPomodoroTime] = useState(25 * 60);
   const [showExercises, setShowExercises] = useState(false);
+  const [parentNotes, setParentNotes] = useState([]);
+  const [showNotes, setShowNotes] = useState(false);
   const chatEndRef = useRef(null);
+
+  // Load parent messages on mount
+  useEffect(() => {
+    const msgs = getMessages().filter(m => m.from === 'parent');
+    setParentNotes(msgs);
+    if (msgs.some(m => !m.read)) setShowNotes(true);
+    markMessagesRead();
+  }, []);
+
+  // Save XP when it changes
+  useEffect(() => { saveXp(xp); }, [xp]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -536,6 +549,22 @@ function StudentView({ subject, onBack, studentName }) {
         ))}
       </div>
 
+      {/* Parent Notes Banner */}
+      {showNotes && parentNotes.length > 0 && (
+        <div style={{ margin: '0 20px', background: '#FEF3C7', borderRadius: 12, padding: 16, border: '1px solid #FCD34D' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <h4 style={{ margin: 0, fontSize: 14, color: '#92400E' }}>💌 Recados do Responsavel</h4>
+            <button onClick={() => setShowNotes(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#92400E' }}>✕</button>
+          </div>
+          {parentNotes.slice(-3).map((n, i) => (
+            <div key={i} style={{ background: '#FFFBEB', borderRadius: 8, padding: '8px 12px', marginBottom: 4, fontSize: 14, color: '#78350F' }}>
+              {n.text}
+              <div style={{ fontSize: 10, color: '#B45309', marginTop: 4 }}>{new Date(n.time).toLocaleString('pt-BR')}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Chat */}
       <div style={{ flex: 1, padding: '12px 20px', minHeight: 300, maxHeight: 'calc(100vh - 380px)', overflowY: 'auto' }}>
         {messages.length === 0 && (
@@ -601,7 +630,7 @@ function ParentView({ subject, onBack }) {
   const [loading, setLoading] = useState(false);
   const [newContent, setNewContent] = useState('');
   const [note, setNote] = useState('');
-  const [checkedTopics, setCheckedTopics] = useState({});
+  const [checkedTopics, setCheckedTopics] = useState(() => getChecklist(subject));
   const [flashcards, setFlashcards] = useState([]);
   const [flippedCards, setFlippedCards] = useState({});
   const [generatingCards, setGeneratingCards] = useState(false);
@@ -782,7 +811,7 @@ function ParentView({ subject, onBack }) {
                 placeholder="Escreva um recado de incentivo..."
                 style={{ width: '100%', minHeight: 80, border: '1px solid #E5E7EB', borderRadius: 8, padding: 12, fontSize: 14, resize: 'vertical', boxSizing: 'border-box' }}
               />
-              <button onClick={() => { if (note) { alert('Recado salvo! O aluno vera quando abrir o app.'); setNote(''); }}} style={{ marginTop: 8, background: '#1E3A5F', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', cursor: 'pointer' }}>
+              <button onClick={() => { if (note) { addMessage('parent', note); alert('Recado enviado! ' + (loadFamily()?.studentName || 'O aluno') + ' vera quando abrir o app.'); setNote(''); }}} style={{ marginTop: 8, background: '#1E3A5F', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', cursor: 'pointer' }}>
                 Enviar Recado
               </button>
             </div>
@@ -801,7 +830,7 @@ function ParentView({ subject, onBack }) {
 
               {config.topics.map(t => (
                 <div key={t.id} style={{ display: 'flex', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #F3F4F6', gap: 12 }}>
-                  <button onClick={() => setCheckedTopics(prev => ({ ...prev, [t.id]: !prev[t.id] }))} style={{
+                  <button onClick={() => setCheckedTopics(prev => { const next = { ...prev, [t.id]: !prev[t.id] }; saveChecklist(subject, next); return next; })} style={{
                     width: 28, height: 28, borderRadius: 8, border: '2px solid ' + (checkedTopics[t.id] ? '#10B981' : '#D1D5DB'),
                     background: checkedTopics[t.id] ? '#10B981' : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#fff', fontSize: 14
                   }}>
@@ -994,8 +1023,6 @@ function ParentView({ subject, onBack }) {
 // PIN SCREEN
 // ============================
 
-const PARENT_PIN = '0608';
-
 function PinScreen({ onSuccess, onBack }) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
@@ -1007,7 +1034,8 @@ function PinScreen({ onSuccess, onBack }) {
     setPin(newPin);
     setError(false);
     if (newPin.length === 4) {
-      if (newPin === PARENT_PIN) {
+      const family = loadFamily();
+      if (family && newPin === family.pin) {
         onSuccess();
       } else {
         setError(true);
@@ -1230,91 +1258,189 @@ function SubjectSelector({ role, onSelect, onBack, studentName }) {
 }
 
 // ============================
-// MAIN APP
+// PERSISTENCE HELPERS
 // ============================
 
-function NameScreen({ onSubmit, onBack }) {
-  const [name, setName] = useState('');
+const STORAGE_KEY = 'estudamente_family';
 
-  const handleSubmit = () => {
-    if (name.trim()) onSubmit(name.trim());
+function loadFamily() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : null;
+  } catch { return null; }
+}
+
+function saveFamily(family) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(family));
+}
+
+function getMessages() {
+  const family = loadFamily();
+  return family?.messages || [];
+}
+
+function addMessage(from, text) {
+  const family = loadFamily();
+  if (!family) return;
+  if (!family.messages) family.messages = [];
+  family.messages.push({ from, text, time: Date.now(), read: false });
+  saveFamily(family);
+}
+
+function markMessagesRead() {
+  const family = loadFamily();
+  if (!family?.messages) return;
+  family.messages = family.messages.map(m => ({ ...m, read: true }));
+  saveFamily(family);
+}
+
+function getChecklist(subject) {
+  const family = loadFamily();
+  return family?.checklist?.[subject] || {};
+}
+
+function saveChecklist(subject, checked) {
+  const family = loadFamily();
+  if (!family) return;
+  if (!family.checklist) family.checklist = {};
+  family.checklist[subject] = checked;
+  saveFamily(family);
+}
+
+function getXp() {
+  const family = loadFamily();
+  return family?.xp || 0;
+}
+
+function saveXp(xp) {
+  const family = loadFamily();
+  if (!family) return;
+  family.xp = xp;
+  saveFamily(family);
+}
+
+// ============================
+// SETUP SCREEN (first time)
+// ============================
+
+function SetupScreen({ onComplete }) {
+  const [step, setStep] = useState(1);
+  const [studentName, setStudentName] = useState('');
+  const [pin, setPin] = useState('');
+  const [pinConfirm, setPinConfirm] = useState('');
+  const [pinError, setPinError] = useState('');
+
+  const handleFinish = () => {
+    if (pin.length !== 4) { setPinError('PIN deve ter 4 digitos'); return; }
+    if (pin !== pinConfirm) { setPinError('PINs nao conferem'); return; }
+    const family = { studentName: studentName.trim(), pin, messages: [], checklist: {}, xp: 0, createdAt: Date.now() };
+    saveFamily(family);
+    onComplete(family);
   };
 
   return (
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontFamily: "'Inter', sans-serif",
-      padding: 20
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      fontFamily: "'Inter', sans-serif", padding: 20
     }}>
       <Head>
-        <title>EstudaMente - Qual seu nome?</title>
+        <title>EstudaMente - Configuracao</title>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </Head>
 
-      <div style={{ fontSize: 48, marginBottom: 16 }}>👩‍🎓</div>
-      <h2 style={{ color: '#fff', fontSize: 24, marginBottom: 8 }}>Qual o seu nome?</h2>
-      <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 32 }}>Para personalizar sua experiencia de estudo</p>
+      <h1 style={{ color: '#fff', fontSize: 36, marginBottom: 4 }}>🧠 EstudaMente</h1>
+      <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 32 }}>Configuracao inicial da familia</p>
 
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-        placeholder="Digite seu nome..."
-        autoFocus
-        style={{
-          width: 280,
-          padding: '14px 20px',
-          borderRadius: 12,
-          border: '2px solid rgba(255,255,255,0.2)',
-          background: 'rgba(255,255,255,0.1)',
-          color: '#fff',
-          fontSize: 18,
-          textAlign: 'center',
-          outline: 'none',
-          marginBottom: 20
-        }}
-      />
+      {/* Step indicator */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 32 }}>
+        {[1, 2].map(s => (
+          <div key={s} style={{ width: 40, height: 6, borderRadius: 3, background: s <= step ? '#FBBF24' : 'rgba(255,255,255,0.2)' }} />
+        ))}
+      </div>
 
-      <button onClick={handleSubmit} style={{
-        background: 'linear-gradient(135deg, #6C5CE7, #A855F7)',
-        color: '#fff',
-        border: 'none',
-        borderRadius: 12,
-        padding: '12px 40px',
-        fontSize: 16,
-        fontWeight: 600,
-        cursor: name.trim() ? 'pointer' : 'not-allowed',
-        opacity: name.trim() ? 1 : 0.5,
-        marginBottom: 16
-      }}>
-        Comecar a estudar!
-      </button>
+      {step === 1 && (
+        <>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>👩‍🎓</div>
+          <h2 style={{ color: '#fff', fontSize: 22, marginBottom: 8 }}>Qual o nome do(a) aluno(a)?</h2>
+          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 24 }}>Esse nome sera usado para personalizar a experiencia</p>
+          <input
+            value={studentName} onChange={(e) => setStudentName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && studentName.trim() && setStep(2)}
+            placeholder="Nome do aluno(a)..." autoFocus
+            style={{ width: 280, padding: '14px 20px', borderRadius: 12, border: '2px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 18, textAlign: 'center', outline: 'none', marginBottom: 20 }}
+          />
+          <button onClick={() => studentName.trim() && setStep(2)} style={{
+            background: studentName.trim() ? 'linear-gradient(135deg, #6C5CE7, #A855F7)' : 'rgba(255,255,255,0.1)',
+            color: '#fff', border: 'none', borderRadius: 12, padding: '12px 40px', fontSize: 16, fontWeight: 600,
+            cursor: studentName.trim() ? 'pointer' : 'not-allowed', opacity: studentName.trim() ? 1 : 0.5
+          }}>
+            Proximo →
+          </button>
+        </>
+      )}
 
-      <button onClick={onBack} style={{
-        background: 'none',
-        border: 'none',
-        color: 'rgba(255,255,255,0.5)',
-        fontSize: 14,
-        cursor: 'pointer',
-        padding: '8px 16px'
-      }}>
-        ← Voltar
-      </button>
+      {step === 2 && (
+        <>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+          <h2 style={{ color: '#fff', fontSize: 22, marginBottom: 8 }}>Crie um PIN do responsavel</h2>
+          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 24 }}>PIN de 4 digitos para acessar o painel do responsavel</p>
+          <input
+            value={pin} onChange={(e) => { const v = e.target.value.replace(/\D/g, '').slice(0, 4); setPin(v); setPinError(''); }}
+            placeholder="PIN (4 digitos)" type="password" inputMode="numeric"
+            style={{ width: 200, padding: '14px 20px', borderRadius: 12, border: '2px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 24, textAlign: 'center', outline: 'none', marginBottom: 12, letterSpacing: 8 }}
+          />
+          <input
+            value={pinConfirm} onChange={(e) => { const v = e.target.value.replace(/\D/g, '').slice(0, 4); setPinConfirm(v); setPinError(''); }}
+            onKeyDown={(e) => e.key === 'Enter' && handleFinish()}
+            placeholder="Confirme o PIN" type="password" inputMode="numeric"
+            style={{ width: 200, padding: '14px 20px', borderRadius: 12, border: '2px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 24, textAlign: 'center', outline: 'none', marginBottom: 8, letterSpacing: 8 }}
+          />
+          {pinError && <p style={{ color: '#EF4444', fontSize: 13, marginBottom: 8 }}>{pinError}</p>}
+          <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+            <button onClick={() => setStep(1)} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 24px', fontSize: 14, cursor: 'pointer' }}>
+              ← Voltar
+            </button>
+            <button onClick={handleFinish} style={{
+              background: 'linear-gradient(135deg, #10B981, #059669)', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 32px', fontSize: 16, fontWeight: 600, cursor: 'pointer'
+            }}>
+              ✅ Criar Familia
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
+// ============================
+// MAIN APP
+// ============================
+
 export default function Home() {
+  const [family, setFamily] = useState(undefined); // undefined = loading, null = no family
   const [role, setRole] = useState(null);
   const [subject, setSubject] = useState(null);
   const [showPin, setShowPin] = useState(false);
-  const [studentName, setStudentName] = useState('');
-  const [showNameScreen, setShowNameScreen] = useState(false);
+
+  // Load family on mount
+  useEffect(() => {
+    setFamily(loadFamily());
+  }, []);
+
+  // Loading state
+  if (family === undefined) return null;
+
+  // First time setup
+  if (!family) {
+    return <SetupScreen onComplete={(f) => setFamily(f)} />;
+  }
+
+  const studentName = family.studentName;
+  const unreadMessages = (family.messages || []).filter(m => !m.read && m.from === 'parent').length;
 
   // Full app with subject selected
   if (role && subject) {
@@ -1328,11 +1454,6 @@ export default function Home() {
     return <SubjectSelector role={role} onSelect={setSubject} onBack={() => setRole(null)} studentName={studentName} />;
   }
 
-  // Name screen for student
-  if (showNameScreen) {
-    return <NameScreen onSubmit={(name) => { setStudentName(name); setRole('student'); setShowNameScreen(false); }} onBack={() => setShowNameScreen(false)} />;
-  }
-
   // PIN screen for parent
   if (showPin) {
     return <PinScreen onSuccess={() => { setRole('parent'); setShowPin(false); }} onBack={() => setShowPin(false)} />;
@@ -1343,12 +1464,8 @@ export default function Home() {
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontFamily: "'Inter', sans-serif",
-      padding: 20
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      fontFamily: "'Inter', sans-serif", padding: 20
     }}>
       <Head>
         <title>EstudaMente - Plataforma de Estudos</title>
@@ -1356,46 +1473,42 @@ export default function Home() {
       </Head>
 
       <h1 style={{ color: '#fff', fontSize: 48, marginBottom: 8, textAlign: 'center' }}>🧠 EstudaMente</h1>
-      <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 18, marginBottom: 8 }}>Plataforma Multidimensional de Estudos</p>
+      <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 18, marginBottom: 4 }}>Plataforma Multidimensional de Estudos</p>
+      <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, marginBottom: 8 }}>Ola, familia de <strong style={{ color: '#FBBF24' }}>{studentName}</strong>!</p>
       <p style={{ color: '#FBBF24', fontSize: 14, marginBottom: 40 }}>📖 Portugues 08/04 | 📜 Historia 09/04 | 🧮 Matematica 10/04</p>
 
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
-        <button onClick={() => setShowNameScreen(true)} style={{
-          background: 'linear-gradient(135deg, #6C5CE7, #A855F7)',
-          color: '#fff',
-          border: 'none',
-          borderRadius: 20,
-          padding: '40px 50px',
-          fontSize: 18,
-          cursor: 'pointer',
-          textAlign: 'center',
-          minWidth: 220,
-          boxShadow: '0 10px 30px rgba(108,92,231,0.4)',
-          transition: 'transform 0.2s'
+        <button onClick={() => setRole('student')} style={{
+          background: 'linear-gradient(135deg, #6C5CE7, #A855F7)', color: '#fff', border: 'none', borderRadius: 20,
+          padding: '40px 50px', fontSize: 18, cursor: 'pointer', textAlign: 'center', minWidth: 220,
+          boxShadow: '0 10px 30px rgba(108,92,231,0.4)', transition: 'transform 0.2s', position: 'relative'
         }}>
+          {unreadMessages > 0 && (
+            <div style={{ position: 'absolute', top: -8, right: -8, background: '#EF4444', color: '#fff', borderRadius: 20, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700 }}>
+              {unreadMessages}
+            </div>
+          )}
           <div style={{ fontSize: 48, marginBottom: 12 }}>👩‍🎓</div>
-          <div style={{ fontWeight: 700 }}>Sou Aluno(a)</div>
+          <div style={{ fontWeight: 700 }}>Sou {studentName}</div>
           <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>Modo Estudante</div>
         </button>
 
         <button onClick={() => setShowPin(true)} style={{
-          background: 'linear-gradient(135deg, #1E3A5F, #2D5F8B)',
-          color: '#fff',
-          border: 'none',
-          borderRadius: 20,
-          padding: '40px 50px',
-          fontSize: 18,
-          cursor: 'pointer',
-          textAlign: 'center',
-          minWidth: 220,
-          boxShadow: '0 10px 30px rgba(30,58,95,0.4)',
-          transition: 'transform 0.2s'
+          background: 'linear-gradient(135deg, #1E3A5F, #2D5F8B)', color: '#fff', border: 'none', borderRadius: 20,
+          padding: '40px 50px', fontSize: 18, cursor: 'pointer', textAlign: 'center', minWidth: 220,
+          boxShadow: '0 10px 30px rgba(30,58,95,0.4)', transition: 'transform 0.2s'
         }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>👨‍💼</div>
           <div style={{ fontWeight: 700 }}>Sou Responsavel</div>
           <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>Modo Acompanhamento</div>
         </button>
       </div>
+
+      <button onClick={() => { if (confirm('Isso apagara todos os dados desta familia. Deseja continuar?')) { localStorage.removeItem(STORAGE_KEY); setFamily(null); }}} style={{
+        background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: 12, cursor: 'pointer', marginTop: 40, padding: '8px 16px'
+      }}>
+        Trocar familia / Reconfigurar
+      </button>
     </div>
   );
 }
