@@ -601,6 +601,10 @@ function ParentView({ subject, onBack }) {
   const [loading, setLoading] = useState(false);
   const [newContent, setNewContent] = useState('');
   const [note, setNote] = useState('');
+  const [checkedTopics, setCheckedTopics] = useState({});
+  const [flashcards, setFlashcards] = useState([]);
+  const [flippedCards, setFlippedCards] = useState({});
+  const [generatingCards, setGeneratingCards] = useState(false);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
@@ -632,6 +636,32 @@ function ParentView({ subject, onBack }) {
     setLoading(false);
   };
 
+  const generateFlashcards = async () => {
+    setGeneratingCards(true);
+    try {
+      const topicNames = config.topics.map(t => t.name + ' (' + t.desc + ')').join(', ');
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: 'Gere exatamente 8 flashcards para revisao sobre: ' + topicNames + '. Responda APENAS no formato JSON array, sem texto extra: [{"q":"pergunta curta","a":"resposta curta"}]. Cada pergunta deve ter no maximo 15 palavras e cada resposta no maximo 20 palavras.' }],
+          system: 'Voce gera flashcards educacionais. Responda APENAS com JSON valido, sem markdown, sem texto antes ou depois.'
+        })
+      });
+      const data = await res.json();
+      try {
+        const jsonStr = data.content.replace(/```json?/g, '').replace(/```/g, '').trim();
+        const cards = JSON.parse(jsonStr);
+        if (Array.isArray(cards)) setFlashcards(cards);
+      } catch (e) {
+        setFlashcards([{ q: 'Erro ao gerar cards', a: 'Tente novamente' }]);
+      }
+    } catch (err) {
+      setFlashcards([{ q: 'Erro de conexao', a: 'Tente novamente' }]);
+    }
+    setGeneratingCards(false);
+  };
+
   const daysUntilTest = () => {
     const test = new Date(config.test.date);
     const now = new Date();
@@ -640,6 +670,9 @@ function ParentView({ subject, onBack }) {
   };
 
   const isUrgent = daysUntilTest() <= 1;
+  const checkedCount = Object.values(checkedTopics).filter(Boolean).length;
+  const totalTopics = config.topics.length;
+  const progressPercent = Math.round((checkedCount / totalTopics) * 100);
 
   return (
     <div style={{ minHeight: '100vh', background: '#F0F4F8', fontFamily: "'Inter', sans-serif" }}>
@@ -654,25 +687,34 @@ function ParentView({ subject, onBack }) {
           <button onClick={onBack} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, color: '#fff', padding: '6px 10px', cursor: 'pointer', fontSize: 16 }}>
             ←
           </button>
-          <div>
+          <div style={{ flex: 1 }}>
             <h1 style={{ margin: 0, fontSize: 20 }}>📊 EstudaMente - {config.emoji} {config.name}</h1>
             <p style={{ margin: 0, fontSize: 13, opacity: 0.8 }}>Painel do Responsavel</p>
           </div>
+          {checkedCount > 0 && (
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 12 }}>{checkedCount}/{totalTopics} topicos</div>
+              <div style={{ background: 'rgba(255,255,255,0.3)', borderRadius: 10, height: 6, width: 80, marginTop: 2 }}>
+                <div style={{ background: '#10B981', borderRadius: 10, height: 6, width: (progressPercent / 100) * 80 }} />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', background: '#fff', borderBottom: '1px solid #E5E7EB' }}>
-        {[['overview', '📋 Visao Geral'], ['content', '📚 Conteudo'], ['consultant', '🤖 Consultor IA']].map(([key, label]) => (
+      {/* Tabs - scrollable */}
+      <div style={{ display: 'flex', background: '#fff', borderBottom: '1px solid #E5E7EB', overflowX: 'auto' }}>
+        {[['overview', '📋 Geral'], ['checklist', '✅ Revisao'], ['flashcards', '🃏 Flashcards'], ['simulator', '📝 Simulado'], ['consultant', '🤖 IA']].map(([key, label]) => (
           <button key={key} onClick={() => setTab(key)} style={{
-            flex: 1,
-            padding: '12px',
+            flex: 'none',
+            padding: '12px 16px',
             background: tab === key ? '#1E3A5F' : 'transparent',
             color: tab === key ? '#fff' : '#6B7280',
             border: 'none',
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: 600,
-            cursor: 'pointer'
+            cursor: 'pointer',
+            whiteSpace: 'nowrap'
           }}>
             {label}
           </button>
@@ -680,6 +722,8 @@ function ParentView({ subject, onBack }) {
       </div>
 
       <div style={{ padding: 20 }}>
+
+        {/* ===== OVERVIEW TAB ===== */}
         {tab === 'overview' && (
           <div>
             <div style={{ background: isUrgent ? '#FEF2F2' : '#fff', borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: isUrgent ? '2px solid #EF4444' : 'none' }}>
@@ -691,19 +735,45 @@ function ParentView({ subject, onBack }) {
               <p style={{ color: '#6B7280', fontSize: 13 }}>{config.test.details}</p>
             </div>
 
+            {/* Progress bar */}
             <div style={{ background: '#fff', borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              <h3 style={{ margin: '0 0 12px' }}>📚 Topicos - {config.name}</h3>
-              {config.topics.map(t => (
-                <div key={t.id} style={{ display: 'flex', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #F3F4F6' }}>
-                  <span style={{ fontSize: 20, marginRight: 12 }}>{t.emoji}</span>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>{t.name}</div>
-                    <div style={{ fontSize: 12, color: '#9CA3AF' }}>{t.desc}</div>
-                  </div>
+              <h3 style={{ margin: '0 0 12px' }}>📊 Progresso da Revisao</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ flex: 1, background: '#E5E7EB', borderRadius: 10, height: 16 }}>
+                  <div style={{ background: progressPercent === 100 ? '#10B981' : '#3B82F6', borderRadius: 10, height: 16, width: progressPercent + '%', transition: 'width 0.3s' }} />
                 </div>
-              ))}
+                <span style={{ fontWeight: 700, fontSize: 18, color: progressPercent === 100 ? '#10B981' : '#1E3A5F' }}>{progressPercent}%</span>
+              </div>
+              <p style={{ color: '#6B7280', fontSize: 13, margin: '8px 0 0' }}>
+                {checkedCount === 0 ? 'Marque os topicos revisados na aba ✅ Revisao' : checkedCount === totalTopics ? '🎉 Todos os topicos revisados! Pronto para a prova!' : checkedCount + ' de ' + totalTopics + ' topicos revisados'}
+              </p>
             </div>
 
+            {/* Quick actions grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+              <button onClick={() => setTab('flashcards')} style={{ background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #E5E7EB', cursor: 'pointer', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                <div style={{ fontSize: 28, marginBottom: 4 }}>🃏</div>
+                <div style={{ fontWeight: 600, fontSize: 13, color: '#1E3A5F' }}>Flashcards</div>
+                <div style={{ fontSize: 11, color: '#9CA3AF' }}>Revisao rapida juntos</div>
+              </button>
+              <button onClick={() => setTab('simulator')} style={{ background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #E5E7EB', cursor: 'pointer', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                <div style={{ fontSize: 28, marginBottom: 4 }}>📝</div>
+                <div style={{ fontWeight: 600, fontSize: 13, color: '#1E3A5F' }}>Simulado</div>
+                <div style={{ fontSize: 11, color: '#9CA3AF' }}>Prova simulada completa</div>
+              </button>
+              <button onClick={() => setTab('checklist')} style={{ background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #E5E7EB', cursor: 'pointer', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                <div style={{ fontSize: 28, marginBottom: 4 }}>✅</div>
+                <div style={{ fontWeight: 600, fontSize: 13, color: '#1E3A5F' }}>Checklist</div>
+                <div style={{ fontSize: 11, color: '#9CA3AF' }}>Marcar topicos revisados</div>
+              </button>
+              <button onClick={() => setTab('consultant')} style={{ background: '#fff', borderRadius: 12, padding: 16, border: '1px solid #E5E7EB', cursor: 'pointer', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                <div style={{ fontSize: 28, marginBottom: 4 }}>🤖</div>
+                <div style={{ fontWeight: 600, fontSize: 13, color: '#1E3A5F' }}>Consultor IA</div>
+                <div style={{ fontSize: 11, color: '#9CA3AF' }}>Estrategias de estudo</div>
+              </button>
+            </div>
+
+            {/* Send note */}
             <div style={{ background: '#fff', borderRadius: 12, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <h3 style={{ margin: '0 0 12px' }}>📝 Enviar Recado para o Aluno</h3>
               <textarea
@@ -719,24 +789,158 @@ function ParentView({ subject, onBack }) {
           </div>
         )}
 
-        {tab === 'content' && (
+        {/* ===== CHECKLIST TAB ===== */}
+        {tab === 'checklist' && (
           <div>
-            <div style={{ background: '#fff', borderRadius: 12, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              <h3 style={{ margin: '0 0 12px' }}>📝 Adicionar Novo Conteudo de {config.name}</h3>
-              <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 12 }}>Cole o texto da materia ou prova abaixo. A IA processara e extraira os topicos automaticamente.</p>
-              <textarea
-                value={newContent}
-                onChange={(e) => setNewContent(e.target.value)}
-                placeholder="Cole aqui o texto da materia, prova, ou orientacoes do professor..."
-                style={{ width: '100%', minHeight: 200, border: '1px solid #E5E7EB', borderRadius: 8, padding: 12, fontSize: 14, resize: 'vertical', boxSizing: 'border-box' }}
-              />
-              <button onClick={() => { if (newContent) { sendMessage('Analise este conteudo escolar de ' + config.name + ' e extraia: titulo, materia, topicos principais e sugestoes de estudo: ' + newContent); setNewContent(''); setTab('consultant'); }}} style={{ marginTop: 12, background: '#1E3A5F', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', cursor: 'pointer', fontSize: 14 }}>
-                🤖 Processar com IA
+            <div style={{ background: '#fff', borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <h3 style={{ margin: 0 }}>✅ Checklist de Revisao</h3>
+                <span style={{ fontSize: 14, fontWeight: 700, color: progressPercent === 100 ? '#10B981' : '#1E3A5F' }}>{progressPercent}%</span>
+              </div>
+              <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 16 }}>Marque cada topico apos revisar com o aluno. Clique no topico para receber dicas de como explica-lo.</p>
+
+              {config.topics.map(t => (
+                <div key={t.id} style={{ display: 'flex', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #F3F4F6', gap: 12 }}>
+                  <button onClick={() => setCheckedTopics(prev => ({ ...prev, [t.id]: !prev[t.id] }))} style={{
+                    width: 28, height: 28, borderRadius: 8, border: '2px solid ' + (checkedTopics[t.id] ? '#10B981' : '#D1D5DB'),
+                    background: checkedTopics[t.id] ? '#10B981' : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#fff', fontSize: 14
+                  }}>
+                    {checkedTopics[t.id] ? '✓' : ''}
+                  </button>
+                  <div style={{ flex: 1, opacity: checkedTopics[t.id] ? 0.5 : 1, textDecoration: checkedTopics[t.id] ? 'line-through' : 'none' }}>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{t.emoji} {t.name}</div>
+                    <div style={{ fontSize: 12, color: '#9CA3AF' }}>{t.desc}</div>
+                  </div>
+                  <button onClick={() => { sendMessage('Me de dicas praticas de como eu, como pai/mae, posso explicar o topico "' + t.name + ' - ' + t.desc + '" para meu filho de forma simples e engajante em casa. Inclua: 1) Como introduzir o assunto 2) Atividade pratica para fazer juntos 3) Perguntas para verificar se entendeu.'); setTab('consultant'); }} style={{
+                    background: '#EFF6FF', border: 'none', borderRadius: 8, padding: '6px 10px', fontSize: 11, cursor: 'pointer', color: '#3B82F6', fontWeight: 600, flexShrink: 0
+                  }}>
+                    💡 Dicas
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {checkedCount > 0 && checkedCount < totalTopics && (
+              <div style={{ background: '#FFFBEB', borderRadius: 12, padding: 16, border: '1px solid #FCD34D', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                <p style={{ margin: 0, fontSize: 13, color: '#92400E' }}>
+                  💪 <strong>Faltam {totalTopics - checkedCount} topicos!</strong> Foque nos nao marcados. Clique em "💡 Dicas" ao lado de cada um para saber como abordar.
+                </p>
+              </div>
+            )}
+            {checkedCount === totalTopics && (
+              <div style={{ background: '#ECFDF5', borderRadius: 12, padding: 16, border: '1px solid #6EE7B7', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                <p style={{ margin: 0, fontSize: 13, color: '#065F46' }}>
+                  🎉 <strong>Todos os topicos revisados!</strong> Que tal fazer um simulado na aba 📝 Simulado para testar o conhecimento?
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ===== FLASHCARDS TAB ===== */}
+        {tab === 'flashcards' && (
+          <div>
+            <div style={{ background: '#fff', borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <h3 style={{ margin: '0 0 8px' }}>🃏 Flashcards de Revisao</h3>
+              <p style={{ fontSize: 13, color: '#6B7280', margin: '0 0 16px' }}>Revise os topicos juntos! Clique no cartao para ver a resposta.</p>
+              <button onClick={generateFlashcards} disabled={generatingCards} style={{
+                background: generatingCards ? '#9CA3AF' : '#1E3A5F', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', cursor: generatingCards ? 'wait' : 'pointer', fontSize: 14
+              }}>
+                {generatingCards ? '⏳ Gerando flashcards...' : flashcards.length > 0 ? '🔄 Gerar novos flashcards' : '✨ Gerar flashcards com IA'}
               </button>
+            </div>
+
+            {flashcards.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                {flashcards.map((card, i) => (
+                  <button key={i} onClick={() => setFlippedCards(prev => ({ ...prev, [i]: !prev[i] }))} style={{
+                    background: flippedCards[i] ? '#ECFDF5' : '#fff',
+                    borderRadius: 12,
+                    padding: 16,
+                    border: flippedCards[i] ? '2px solid #10B981' : '1px solid #E5E7EB',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    minHeight: 100,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                    transition: 'all 0.2s'
+                  }}>
+                    <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 6 }}>
+                      {flippedCards[i] ? '✅ Resposta' : '❓ Pergunta ' + (i + 1)}
+                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: flippedCards[i] ? '#065F46' : '#1E3A5F', lineHeight: 1.4 }}>
+                      {flippedCards[i] ? card.a : card.q}
+                    </div>
+                    <div style={{ fontSize: 10, color: '#9CA3AF', marginTop: 8 }}>
+                      {flippedCards[i] ? 'Clique para ver pergunta' : 'Clique para ver resposta'}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {flashcards.length > 0 && (
+              <div style={{ marginTop: 16, textAlign: 'center' }}>
+                <button onClick={() => setFlippedCards({})} style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, padding: '8px 16px', fontSize: 13, cursor: 'pointer', color: '#3B82F6', fontWeight: 600 }}>
+                  🔄 Esconder todas as respostas
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ===== SIMULATOR TAB ===== */}
+        {tab === 'simulator' && (
+          <div>
+            <div style={{ background: '#fff', borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <h3 style={{ margin: '0 0 8px' }}>📝 Simulado da Prova</h3>
+              <p style={{ fontSize: 13, color: '#6B7280', margin: '0 0 16px' }}>Gere uma prova simulada no formato real para aplicar em casa. A IA cria questoes diferentes a cada vez.</p>
+
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button onClick={() => sendMessage('Gere um SIMULADO COMPLETO de ' + config.name + ' no formato da prova real. Topicos: ' + config.topics.map(t => t.name).join(', ') + '. Inclua: questoes objetivas com 4 alternativas E questoes dissertativas. Formate bem para o pai poder aplicar em casa. No final, coloque o GABARITO separado.')} style={{
+                  background: '#1E3A5F', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 16px', cursor: 'pointer', fontSize: 13, fontWeight: 600
+                }}>
+                  📋 Simulado Completo
+                </button>
+                <button onClick={() => sendMessage('Gere um SIMULADO RAPIDO (5 questoes) de ' + config.name + ' focando nos topicos mais importantes: ' + config.topics.map(t => t.name).join(', ') + '. Mix de objetivas e abertas. Formate para aplicar em casa. Gabarito no final.')} style={{
+                  background: '#3B82F6', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 16px', cursor: 'pointer', fontSize: 13, fontWeight: 600
+                }}>
+                  ⚡ Simulado Rapido (5 questoes)
+                </button>
+                <button onClick={() => {
+                  const unchecked = config.topics.filter(t => !checkedTopics[t.id]).map(t => t.name);
+                  if (unchecked.length === 0) {
+                    sendMessage('Gere um simulado de revisao geral de ' + config.name + ' cobrindo todos os topicos: ' + config.topics.map(t => t.name).join(', ') + '. Gabarito no final.');
+                  } else {
+                    sendMessage('Gere um simulado FOCADO nos topicos que ainda nao revisamos: ' + unchecked.join(', ') + '. Esses sao os pontos fracos. Crie questoes objetivas e dissertativas. Gabarito no final.');
+                  }
+                }} style={{
+                  background: '#EF4444', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 16px', cursor: 'pointer', fontSize: 13, fontWeight: 600
+                }}>
+                  🎯 Foco nos Pontos Fracos
+                </button>
+              </div>
+            </div>
+
+            {/* Simulator chat */}
+            <div style={{ background: '#fff', borderRadius: 12, minHeight: 300, maxHeight: 500, overflowY: 'auto', padding: 16, marginBottom: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              {messages.length === 0 && (
+                <div style={{ textAlign: 'center', color: '#9CA3AF', padding: 40 }}>
+                  <p style={{ fontSize: 32 }}>📝</p>
+                  <p>Clique em um dos botoes acima para gerar o simulado</p>
+                </div>
+              )}
+              {messages.map((m, i) => <ChatBubble key={i} role={m.role} content={m.content} />)}
+              {loading && <div style={{ textAlign: 'center', color: '#9CA3AF' }}>Gerando simulado... ⏳</div>}
+              <div ref={chatEndRef} />
             </div>
           </div>
         )}
 
+        {/* ===== CONSULTANT TAB ===== */}
         {tab === 'consultant' && (
           <div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
