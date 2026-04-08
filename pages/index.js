@@ -271,7 +271,12 @@ function ExerciseView({ onBack, onAskAI }) {
   const [showAnswer, setShowAnswer] = useState(false);
   const [userAnswer, setUserAnswer] = useState('');
   const [selectedOption, setSelectedOption] = useState(null);
-  const [completed, setCompleted] = useState({});
+  const [completed, setCompleted] = useState(() => loadExerciseProgress());
+
+  // Save exercise progress when it changes
+  useEffect(() => {
+    if (Object.keys(completed).length > 0) saveExerciseProgress(completed);
+  }, [completed]);
 
   if (!selectedList) {
     return (
@@ -381,7 +386,7 @@ function ExerciseView({ onBack, onAskAI }) {
 function StudentView({ subject, onBack, studentName }) {
   const config = SUBJECTS[subject];
   const nameContext = studentName ? ' O(a) aluno(a) se chama ' + studentName + '.' : '';
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => loadChatHistory('student_' + subject));
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState(null);
@@ -398,11 +403,15 @@ function StudentView({ subject, onBack, studentName }) {
     const msgs = getMessages().filter(m => m.from === 'parent');
     setParentNotes(msgs);
     if (msgs.some(m => !m.read)) setShowNotes(true);
-    markMessagesRead();
   }, []);
 
   // Save XP when it changes
   useEffect(() => { saveXp(xp); }, [xp]);
+
+  // Save chat history when messages change
+  useEffect(() => {
+    if (messages.length > 0) saveChatHistory('student_' + subject, messages);
+  }, [messages, subject]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -554,7 +563,7 @@ function StudentView({ subject, onBack, studentName }) {
         <div style={{ margin: '0 20px', background: '#FEF3C7', borderRadius: 12, padding: 16, border: '1px solid #FCD34D' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <h4 style={{ margin: 0, fontSize: 14, color: '#92400E' }}>💌 Recados do Responsavel</h4>
-            <button onClick={() => setShowNotes(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#92400E' }}>✕</button>
+            <button onClick={() => { setShowNotes(false); markMessagesRead(); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#92400E' }}>✕</button>
           </div>
           {parentNotes.slice(-3).map((n, i) => (
             <div key={i} style={{ background: '#FFFBEB', borderRadius: 8, padding: '8px 12px', marginBottom: 4, fontSize: 14, color: '#78350F' }}>
@@ -625,20 +634,39 @@ function StudentView({ subject, onBack, studentName }) {
 function ParentView({ subject, onBack }) {
   const config = SUBJECTS[subject];
   const [tab, setTab] = useState('overview');
-  const [messages, setMessages] = useState([]);
+  const [simulatorMessages, setSimulatorMessages] = useState(() => loadChatHistory('parent_simulator_' + subject));
+  const [consultantMessages, setConsultantMessages] = useState(() => loadChatHistory('parent_consultant_' + subject));
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [newContent, setNewContent] = useState('');
   const [note, setNote] = useState('');
   const [checkedTopics, setCheckedTopics] = useState(() => getChecklist(subject));
-  const [flashcards, setFlashcards] = useState([]);
+  const [flashcards, setFlashcards] = useState(() => loadFlashcards(subject));
   const [flippedCards, setFlippedCards] = useState({});
   const [generatingCards, setGeneratingCards] = useState(false);
   const chatEndRef = useRef(null);
 
+  // Determine which messages/setMessages to use based on current tab
+  const isSimulator = tab === 'simulator';
+  const messages = isSimulator ? simulatorMessages : consultantMessages;
+  const setMessages = isSimulator ? setSimulatorMessages : setConsultantMessages;
+
+  // Save chat histories when they change
+  useEffect(() => {
+    if (simulatorMessages.length > 0) saveChatHistory('parent_simulator_' + subject, simulatorMessages);
+  }, [simulatorMessages, subject]);
+
+  useEffect(() => {
+    if (consultantMessages.length > 0) saveChatHistory('parent_consultant_' + subject, consultantMessages);
+  }, [consultantMessages, subject]);
+
+  // Save flashcards when they change
+  useEffect(() => {
+    if (flashcards.length > 0) saveFlashcardsData(subject, flashcards);
+  }, [flashcards, subject]);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [simulatorMessages, consultantMessages]);
 
   const sendMessage = async (text) => {
     if (!text.trim()) return;
@@ -1321,6 +1349,45 @@ function saveXp(xp) {
   saveFamily(family);
 }
 
+function loadChatHistory(key) {
+  if (typeof window === 'undefined') return [];
+  try {
+    const data = localStorage.getItem('estudamente_chat_' + key);
+    return data ? JSON.parse(data) : [];
+  } catch { return []; }
+}
+
+function saveChatHistory(key, messages) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('estudamente_chat_' + key, JSON.stringify(messages));
+}
+
+function loadExerciseProgress() {
+  if (typeof window === 'undefined') return {};
+  try {
+    const data = localStorage.getItem('estudamente_exercises');
+    return data ? JSON.parse(data) : {};
+  } catch { return {}; }
+}
+
+function saveExerciseProgress(completed) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('estudamente_exercises', JSON.stringify(completed));
+}
+
+function loadFlashcards(subject) {
+  if (typeof window === 'undefined') return [];
+  try {
+    const data = localStorage.getItem('estudamente_flashcards_' + subject);
+    return data ? JSON.parse(data) : [];
+  } catch { return []; }
+}
+
+function saveFlashcardsData(subject, cards) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('estudamente_flashcards_' + subject, JSON.stringify(cards));
+}
+
 // ============================
 // SETUP SCREEN (first time)
 // ============================
@@ -1430,6 +1497,14 @@ export default function Home() {
   useEffect(() => {
     setFamily(loadFamily());
   }, []);
+
+  // Refresh family data when returning to role selector (role/subject change)
+  useEffect(() => {
+    if (!role || !subject) {
+      const fresh = loadFamily();
+      if (fresh) setFamily(fresh);
+    }
+  }, [role, subject]);
 
   // Loading state
   if (family === undefined) return null;
