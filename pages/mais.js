@@ -1,25 +1,27 @@
 import { useState, useRef } from 'react';
 import Head from 'next/head';
-import { useLocalStorage, todayStr, formatDate, daysUntil, genId, THEME, WEEKDAYS_FULL, MONTHS } from '@/lib/store';
+import { useLocalStorage, useProfile, todayStr, formatDate, daysUntil, genId, THEME, WEEKDAYS_FULL, MONTHS, AGE_GROUPS, FONT_SCALES } from '@/lib/store';
 
 const TABS = [
-  { id: 'financas', icon: '💰', label: 'Financas', color: '#6366F1' },
-  { id: 'familia', icon: '👨‍👧', label: 'Familia', color: '#EC4899' },
-  { id: 'rotina', icon: '⚡', label: 'Rotina', color: '#F59E0B' },
+  { id: 'financas', icon: '💰', label: 'Financas', color: '#6366F1', feature: 'financas' },
+  { id: 'familia', icon: '👨‍👧', label: 'Familia', color: '#EC4899', feature: 'familia' },
+  { id: 'rotina', icon: '⚡', label: 'Rotina', color: '#F59E0B', feature: 'rotina' },
   { id: 'config', icon: '⚙️', label: 'Config', color: '#9CA3AF' },
 ];
 
 export default function MaisPage() {
-  const [tab, setTab] = useState('financas');
-  const activeTab = TABS.find(t => t.id === tab);
+  const [profile] = useProfile();
+  const visibleTabs = TABS.filter(t => !t.feature || (profile?.features || {})[t.feature] !== false);
+  const [tab, setTab] = useState(visibleTabs[0]?.id || 'config');
+  const activeTab = visibleTabs.find(t => t.id === tab) || visibleTabs[0];
 
   return (
     <>
-      <Head><title>Mais | Meu Ultimo Suspiro</title></Head>
+      <Head><title>Mais | LifeApp</title></Head>
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 100px' }}>
         <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 16 }}>☰ Mais</h1>
         <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: THEME.bgCard, borderRadius: 14, padding: 4 }}>
-          {TABS.map(t => (
+          {visibleTabs.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{
               flex: 1, padding: '9px 4px', borderRadius: 11, fontSize: 11, fontWeight: 600,
               background: tab === t.id ? t.color + '25' : 'transparent',
@@ -225,109 +227,154 @@ function FinancasTab() {
 // ==========================================
 // FAMILIA TAB
 // ==========================================
+const FAMILY_RELATIONS = [
+  { id: 'filho', label: 'Filho(a)', icon: '👶' },
+  { id: 'conjuge', label: 'Conjuge / Parceiro(a)', icon: '💜' },
+  { id: 'mae', label: 'Mae', icon: '👩' },
+  { id: 'pai', label: 'Pai', icon: '👨' },
+  { id: 'irmao', label: 'Irmao(a)', icon: '🧑' },
+  { id: 'avo', label: 'Avo / Avo', icon: '🧓' },
+  { id: 'amigo', label: 'Amigo(a)', icon: '🤝' },
+  { id: 'outro', label: 'Outro', icon: '👤' },
+];
+
 function FamiliaTab() {
-  const [daughter, setDaughter] = useLocalStorage('daughter', []);
-  const [fabiana, setFabiana] = useLocalStorage('fabiana', []);
-  const [showAdd, setShowAdd] = useState(null); // 'daughter' | 'fabiana' | null
-  const [form, setForm] = useState({ title: '', date: '', time: '', notes: '', important: false });
+  const [familyMembers, setFamilyMembers] = useLocalStorage('familyMembers', []);
+  const [familyEvents, setFamilyEvents] = useLocalStorage('familyEvents', []);
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [showAddEvent, setShowAddEvent] = useState(null); // memberId
+  const [memberForm, setMemberForm] = useState({ name: '', relation: 'filho', icon: '👶' });
+  const [eventForm, setEventForm] = useState({ title: '', date: '', time: '', notes: '', important: false });
 
   const today = todayStr();
 
-  const addEvent = () => {
-    if (!form.title.trim() || !form.date) return;
-    const entry = { id: genId(), ...form };
-    if (showAdd === 'daughter') setDaughter(prev => [...prev, entry]);
-    else setFabiana(prev => [...prev, entry]);
-    setForm({ title: '', date: '', time: '', notes: '', important: false });
-    setShowAdd(null);
+  const addMember = () => {
+    if (!memberForm.name.trim()) return;
+    const rel = FAMILY_RELATIONS.find(r => r.id === memberForm.relation);
+    setFamilyMembers(prev => [...prev, { id: genId(), ...memberForm, icon: rel?.icon || '👤' }]);
+    setMemberForm({ name: '', relation: 'filho', icon: '👶' });
+    setShowAddMember(false);
   };
 
-  const deleteEvent = (list, setList, id) => setList(prev => prev.filter(e => e.id !== id));
+  const deleteMember = (id) => {
+    if (!confirm('Remover este familiar e todos os eventos dele?')) return;
+    setFamilyMembers(prev => prev.filter(m => m.id !== id));
+    setFamilyEvents(prev => prev.filter(e => e.memberId !== id));
+  };
 
-  const sortedDaughter = [...daughter].filter(d => d.date >= today).sort((a, b) => a.date.localeCompare(b.date));
-  const sortedFabiana = [...fabiana].filter(f => f.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+  const addEvent = () => {
+    if (!eventForm.title.trim() || !eventForm.date || !showAddEvent) return;
+    setFamilyEvents(prev => [...prev, { id: genId(), memberId: showAddEvent, ...eventForm }]);
+    setEventForm({ title: '', date: '', time: '', notes: '', important: false });
+    setShowAddEvent(null);
+  };
+
+  const deleteEvent = (id) => setFamilyEvents(prev => prev.filter(e => e.id !== id));
+
+  const getMemberEvents = (memberId) => familyEvents
+    .filter(e => e.memberId === memberId && e.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 5);
 
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Daughter */}
-      <div style={{ background: THEME.bgCard, border: `1px solid ${THEME.border}`, borderRadius: 16, padding: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700 }}>👧 Minha Filha</h3>
-          <button onClick={() => setShowAdd('daughter')} style={{ fontSize: 12, color: '#EC4899', fontWeight: 700 }}>+ Adicionar</button>
+      {familyMembers.length === 0 ? (
+        <div style={{ background: THEME.bgCard, border: `2px dashed ${THEME.border}`, borderRadius: 16, padding: 24, textAlign: 'center' }}>
+          <span style={{ fontSize: 48 }}>👨‍👩‍👧</span>
+          <h3 style={{ fontSize: 16, fontWeight: 700, marginTop: 12 }}>Adicione seus familiares</h3>
+          <p style={{ fontSize: 13, color: THEME.textMuted, marginTop: 6, lineHeight: 1.5 }}>
+            Registre as pessoas importantes da sua vida e acompanhe eventos, compromissos e datas especiais.
+          </p>
         </div>
-        {sortedDaughter.length === 0 ? (
-          <p style={{ fontSize: 13, color: THEME.textMuted, textAlign: 'center', padding: 16 }}>Nenhum evento cadastrado</p>
-        ) : sortedDaughter.slice(0, 5).map(ev => {
-          const days = daysUntil(ev.date);
+      ) : (
+        familyMembers.map(member => {
+          const events = getMemberEvents(member.id);
           return (
-            <div key={ev.id} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: `1px solid ${THEME.border}20`, alignItems: 'center' }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: '#EC4899' + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: 18 }}>👧</span>
+            <div key={member.id} style={{ background: THEME.bgCard, border: `1px solid ${THEME.border}`, borderRadius: 16, padding: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 22 }}>{member.icon}</span>
+                  <div>
+                    <h3 style={{ fontSize: 15, fontWeight: 700 }}>{member.name}</h3>
+                    <p style={{ fontSize: 10, color: THEME.textMuted }}>
+                      {FAMILY_RELATIONS.find(r => r.id === member.relation)?.label || member.relation}
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => setShowAddEvent(member.id)} style={{ fontSize: 12, color: '#EC4899', fontWeight: 700 }}>+ Evento</button>
+                  <button onClick={() => deleteMember(member.id)} style={{ fontSize: 13, color: THEME.textMuted }}>🗑️</button>
+                </div>
               </div>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontSize: 14, fontWeight: 600 }}>{ev.title}</p>
-                <p style={{ fontSize: 11, color: THEME.textMuted }}>{formatDate(ev.date)} {ev.time && `as ${ev.time}`}</p>
-                {ev.notes && <p style={{ fontSize: 11, color: THEME.textMuted }}>{ev.notes}</p>}
-              </div>
-              <span style={{ fontSize: 10, color: days <= 3 ? THEME.accent : THEME.textMuted, fontWeight: 600 }}>
-                {days === 0 ? 'Hoje!' : days === 1 ? 'Amanha' : `${days}d`}
-              </span>
-              <button onClick={() => deleteEvent(daughter, setDaughter, ev.id)} style={{ fontSize: 12, color: THEME.textMuted }}>✕</button>
+              {events.length === 0 ? (
+                <p style={{ fontSize: 12, color: THEME.textMuted, textAlign: 'center', padding: 10 }}>Nenhum evento proximo</p>
+              ) : events.map(ev => {
+                const days = daysUntil(ev.date);
+                return (
+                  <div key={ev.id} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: `1px solid ${THEME.border}20`, alignItems: 'center' }}>
+                    <span style={{ fontSize: 16 }}>{ev.important ? '⭐' : '📌'}</span>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: 14, fontWeight: 600 }}>{ev.title}</p>
+                      <p style={{ fontSize: 11, color: THEME.textMuted }}>{formatDate(ev.date)} {ev.time && `as ${ev.time}`}</p>
+                      {ev.notes && <p style={{ fontSize: 11, color: THEME.textMuted }}>{ev.notes}</p>}
+                    </div>
+                    <span style={{ fontSize: 10, color: days <= 3 ? THEME.accent : THEME.textMuted, fontWeight: 600 }}>
+                      {days === 0 ? 'Hoje!' : days === 1 ? 'Amanha' : `${days}d`}
+                    </span>
+                    <button onClick={() => deleteEvent(ev.id)} style={{ fontSize: 12, color: THEME.textMuted }}>✕</button>
+                  </div>
+                );
+              })}
             </div>
           );
-        })}
-      </div>
+        })
+      )}
 
-      {/* Fabiana */}
-      <div style={{ background: THEME.bgCard, border: `1px solid ${THEME.border}`, borderRadius: 16, padding: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700 }}>💜 Fabiana</h3>
-          <button onClick={() => setShowAdd('fabiana')} style={{ fontSize: 12, color: '#EC4899', fontWeight: 700 }}>+ Adicionar</button>
-        </div>
-        {sortedFabiana.length === 0 ? (
-          <p style={{ fontSize: 13, color: THEME.textMuted, textAlign: 'center', padding: 16 }}>Nenhum evento cadastrado</p>
-        ) : sortedFabiana.slice(0, 5).map(ev => {
-          const days = daysUntil(ev.date);
-          return (
-            <div key={ev.id} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: `1px solid ${THEME.border}20`, alignItems: 'center' }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: '#EC4899' + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: 18 }}>{ev.important ? '⭐' : '💜'}</span>
-              </div>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontSize: 14, fontWeight: 600 }}>{ev.title}</p>
-                <p style={{ fontSize: 11, color: THEME.textMuted }}>{formatDate(ev.date)} {ev.time && `as ${ev.time}`}</p>
-                {ev.notes && <p style={{ fontSize: 11, color: THEME.textMuted }}>{ev.notes}</p>}
-              </div>
-              <span style={{ fontSize: 10, color: days <= 3 ? THEME.accent : THEME.textMuted, fontWeight: 600 }}>
-                {days === 0 ? 'Hoje!' : days === 1 ? 'Amanha' : `${days}d`}
-              </span>
-              <button onClick={() => deleteEvent(fabiana, setFabiana, ev.id)} style={{ fontSize: 12, color: THEME.textMuted }}>✕</button>
-            </div>
-          );
-        })}
-      </div>
+      <button onClick={() => setShowAddMember(true)} style={{
+        width: '100%', padding: 14, borderRadius: 14, fontSize: 14, fontWeight: 700,
+        background: 'linear-gradient(135deg, #EC4899, #F472B6)', color: '#fff',
+      }}>+ Adicionar Familiar</button>
+
+      {/* Add Member Modal */}
+      {showAddMember && (
+        <Modal onClose={() => setShowAddMember(false)}>
+          <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>👨‍👩‍👧 Novo Familiar</h3>
+          <input value={memberForm.name} onChange={e => setMemberForm(p => ({ ...p, name: e.target.value }))}
+            placeholder="Nome da pessoa" style={inputS} />
+          <label style={labelS}>Relacao</label>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+            {FAMILY_RELATIONS.map(r => (
+              <button key={r.id} onClick={() => setMemberForm(p => ({ ...p, relation: r.id, icon: r.icon }))} style={{
+                padding: '8px 12px', borderRadius: 10, fontSize: 12, fontWeight: 600,
+                background: memberForm.relation === r.id ? '#EC4899' + '25' : THEME.bgInput,
+                border: `1px solid ${memberForm.relation === r.id ? '#EC4899' : THEME.border}`,
+                color: memberForm.relation === r.id ? '#EC4899' : THEME.textMuted,
+              }}>{r.icon} {r.label}</button>
+            ))}
+          </div>
+          <BtnRow onCancel={() => setShowAddMember(false)} onSave={addMember} color="#EC4899" />
+        </Modal>
+      )}
 
       {/* Add Event Modal */}
-      {showAdd && (
-        <Modal onClose={() => setShowAdd(null)}>
+      {showAddEvent && (
+        <Modal onClose={() => setShowAddEvent(null)}>
           <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }}>
-            {showAdd === 'daughter' ? '👧 Evento da Filha' : '💜 Evento da Fabiana'}
+            Novo Evento - {familyMembers.find(m => m.id === showAddEvent)?.name}
           </h3>
-          <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
+          <input value={eventForm.title} onChange={e => setEventForm(p => ({ ...p, title: e.target.value }))}
             placeholder="Titulo do evento" style={inputS} />
           <label style={labelS}>Data</label>
-          <input type="date" value={form.date} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} style={inputS} />
+          <input type="date" value={eventForm.date} onChange={e => setEventForm(p => ({ ...p, date: e.target.value }))} style={inputS} />
           <label style={labelS}>Horario (opcional)</label>
-          <input type="time" value={form.time} onChange={e => setForm(p => ({ ...p, time: e.target.value }))} style={inputS} />
-          <input value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
+          <input type="time" value={eventForm.time} onChange={e => setEventForm(p => ({ ...p, time: e.target.value }))} style={inputS} />
+          <input value={eventForm.notes} onChange={e => setEventForm(p => ({ ...p, notes: e.target.value }))}
             placeholder="Observacoes" style={inputS} />
-          {showAdd === 'fabiana' && (
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: THEME.textSecondary, marginBottom: 12 }}>
-              <input type="checkbox" checked={form.important} onChange={e => setForm(p => ({ ...p, important: e.target.checked }))} />
-              ⭐ Marcar como importante
-            </label>
-          )}
-          <BtnRow onCancel={() => setShowAdd(null)} onSave={addEvent} color="#EC4899" />
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: THEME.textSecondary, marginBottom: 12 }}>
+            <input type="checkbox" checked={eventForm.important} onChange={e => setEventForm(p => ({ ...p, important: e.target.checked }))} />
+            ⭐ Marcar como importante
+          </label>
+          <BtnRow onCancel={() => setShowAddEvent(null)} onSave={addEvent} color="#EC4899" />
         </Modal>
       )}
     </div>
@@ -466,16 +513,49 @@ function RotinaTab() {
 // ==========================================
 // CONFIG TAB
 // ==========================================
+const FEATURE_LABELS = {
+  financas: { label: 'Financas', icon: '💰' },
+  plantao: { label: 'Plantoes', icon: '🏥' },
+  meditacao: { label: 'Meditacao', icon: '🧘' },
+  oracao: { label: 'Oracao', icon: '🙏' },
+  medicamentos: { label: 'Medicamentos', icon: '💊' },
+  exercicio: { label: 'Exercicios', icon: '💪' },
+  familia: { label: 'Familia', icon: '👨‍👧' },
+  estudos: { label: 'Estudos', icon: '📚' },
+  rotina: { label: 'Rotina Diaria', icon: '⚡' },
+  pensamentos: { label: 'Pensamentos', icon: '💭' },
+};
+
 function ConfigTab() {
-  const [userName, setUserName] = useLocalStorage('userName', '');
+  const [profile, setProfile] = useProfile();
   const fileInputRef = useRef(null);
   const [exportMsg, setExportMsg] = useState('');
 
+  const updateProfile = (field, value) => setProfile(p => ({ ...p, [field]: value }));
+
+  const changeAgeGroup = (groupId) => {
+    const grp = AGE_GROUPS[groupId];
+    if (!grp) return;
+    if (!confirm(`Mudar perfil para "${grp.label}"? Isso vai ajustar os modulos visiveis e pode mudar o tamanho da fonte.`)) return;
+    setProfile(p => ({
+      ...p,
+      ageGroup: groupId,
+      fontScale: grp.fontScale > 1 ? 'grande' : p.fontScale,
+      features: grp.defaults.features,
+      educationLabel: grp.defaults.educationLabel,
+      studyProgramLabels: grp.defaults.studyProgramLabels,
+    }));
+  };
+
+  const toggleFeature = (feat) => {
+    setProfile(p => ({ ...p, features: { ...(p.features || {}), [feat]: !(p.features || {})[feat] } }));
+  };
+
   const exportData = () => {
     const data = {};
-    const keys = ['userName', 'thoughts', 'prayerLog', 'meditationLog', 'medications', 'medicationLog',
+    const keys = ['profile', 'userName', 'thoughts', 'prayerLog', 'meditationLog', 'medications', 'medicationLog',
       'exerciseLog', 'schedule', 'shifts', 'tasks', 'postgrad', 'studyLog', 'finances', 'installments',
-      'daughter', 'fabiana', 'dailyRoutine', 'routineLog', 'habits'];
+      'familyMembers', 'familyEvents', 'dailyRoutine', 'routineLog', 'habits'];
     keys.forEach(k => {
       const val = localStorage.getItem(k);
       if (val) data[k] = JSON.parse(val);
@@ -484,7 +564,7 @@ function ConfigTab() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `meu-ultimo-suspiro-backup-${todayStr()}.json`;
+    a.download = `lifeapp-backup-${todayStr()}.json`;
     a.click();
     URL.revokeObjectURL(url);
     setExportMsg('Backup exportado!');
@@ -518,14 +598,79 @@ function ConfigTab() {
     }
   };
 
+  const restartOnboarding = () => {
+    if (confirm('Refazer a configuracao inicial? Seus dados sao mantidos.')) {
+      setProfile(p => ({ ...p, onboarded: false }));
+    }
+  };
+
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Profile */}
       <div style={{ background: THEME.bgCard, border: `1px solid ${THEME.border}`, borderRadius: 16, padding: 16 }}>
         <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>👤 Perfil</h3>
         <label style={labelS}>Seu nome</label>
-        <input value={userName} onChange={e => setUserName(e.target.value)}
+        <input value={profile.name || ''} onChange={e => updateProfile('name', e.target.value)}
           placeholder="Como quer ser chamado?" style={inputS} />
+
+        <label style={labelS}>Faixa Etaria / Perfil</label>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 12 }}>
+          {Object.values(AGE_GROUPS).map(g => (
+            <button key={g.id} onClick={() => changeAgeGroup(g.id)} style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: 10, borderRadius: 10, textAlign: 'left',
+              background: profile.ageGroup === g.id ? THEME.primary + '20' : THEME.bgInput,
+              border: `1px solid ${profile.ageGroup === g.id ? THEME.primary : THEME.border}`,
+            }}>
+              <span style={{ fontSize: 20 }}>{g.icon}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: profile.ageGroup === g.id ? THEME.primary : THEME.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.label}</p>
+                <p style={{ fontSize: 9, color: THEME.textMuted }}>{g.range}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <label style={labelS}>Tamanho do texto</label>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {Object.values(FONT_SCALES).map(f => (
+            <button key={f.id} onClick={() => updateProfile('fontScale', f.id)} style={{
+              flex: 1, padding: 10, borderRadius: 10, fontSize: f.value * 13, fontWeight: 700,
+              background: profile.fontScale === f.id ? THEME.primary + '25' : THEME.bgInput,
+              border: `1px solid ${profile.fontScale === f.id ? THEME.primary : THEME.border}`,
+              color: profile.fontScale === f.id ? THEME.primary : THEME.textMuted,
+            }}>{f.label}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Feature Toggles */}
+      <div style={{ background: THEME.bgCard, border: `1px solid ${THEME.border}`, borderRadius: 16, padding: 16 }}>
+        <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>🎛️ Modulos</h3>
+        <p style={{ fontSize: 11, color: THEME.textMuted, marginBottom: 12 }}>Ative ou desative funcionalidades</p>
+        {Object.entries(FEATURE_LABELS).map(([key, info]) => {
+          const enabled = (profile.features || {})[key] !== false;
+          return (
+            <button key={key} onClick={() => toggleFeature(key)} style={{
+              display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+              padding: '10px 0', borderBottom: `1px solid ${THEME.border}20`, textAlign: 'left',
+            }}>
+              <span style={{ fontSize: 18 }}>{info.icon}</span>
+              <span style={{ flex: 1, fontSize: 14 }}>{info.label}</span>
+              <div style={{
+                width: 36, height: 20, borderRadius: 10, padding: 2,
+                background: enabled ? THEME.primary : THEME.bgInput,
+                border: `1px solid ${enabled ? THEME.primary : THEME.border}`,
+                transition: 'background 0.2s',
+              }}>
+                <div style={{
+                  width: 14, height: 14, borderRadius: '50%', background: '#fff',
+                  transform: `translateX(${enabled ? 16 : 0}px)`,
+                  transition: 'transform 0.2s',
+                }} />
+              </div>
+            </button>
+          );
+        })}
       </div>
 
       {/* Data Management */}
@@ -541,6 +686,10 @@ function ConfigTab() {
           background: THEME.success + '20', color: THEME.success, border: `1px solid ${THEME.success}40`,
         }}>📤 Importar Backup</button>
         <input ref={fileInputRef} type="file" accept=".json" onChange={importData} style={{ display: 'none' }} />
+        <button onClick={restartOnboarding} style={{
+          width: '100%', padding: 12, borderRadius: 10, fontSize: 14, fontWeight: 600, marginBottom: 8,
+          background: THEME.accent + '15', color: THEME.accent, border: `1px solid ${THEME.accent}30`,
+        }}>🔄 Refazer Configuracao Inicial</button>
         <button onClick={resetData} style={{
           width: '100%', padding: 12, borderRadius: 10, fontSize: 14, fontWeight: 600,
           background: THEME.danger + '15', color: THEME.danger, border: `1px solid ${THEME.danger}30`,
@@ -550,8 +699,8 @@ function ConfigTab() {
       {/* About */}
       <div style={{ background: THEME.bgCard, border: `1px solid ${THEME.border}`, borderRadius: 16, padding: 16, textAlign: 'center' }}>
         <span style={{ fontSize: 40 }}>🔥</span>
-        <h3 style={{ fontSize: 18, fontWeight: 800, marginTop: 8 }}>Meu Ultimo Suspiro</h3>
-        <p style={{ fontSize: 12, color: THEME.textMuted, marginTop: 4 }}>v1.0.0</p>
+        <h3 style={{ fontSize: 18, fontWeight: 800, marginTop: 8 }}>LifeApp</h3>
+        <p style={{ fontSize: 12, color: THEME.textMuted, marginTop: 2 }}>Meu Ultimo Suspiro - v1.1.0</p>
         <p style={{ fontSize: 13, color: THEME.textSecondary, marginTop: 8, lineHeight: 1.6, fontStyle: 'italic' }}>
           "Cada respiro e uma chance de fazer diferente. Organize sua vida. Cuide de quem voce ama. Seja a melhor versao de si mesmo."
         </p>

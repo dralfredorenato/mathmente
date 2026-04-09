@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react';
 import Head from 'next/head';
-import { useLocalStorage, todayStr, isToday, formatDate, formatWeekday, getWeekDates, getMonthDates, genId, THEME, CATEGORIES, WEEKDAYS, MONTHS } from '@/lib/store';
+import { useLocalStorage, useProfile, todayStr, isToday, formatDate, formatWeekday, getWeekDates, getMonthDates, genId, THEME, CATEGORIES, WEEKDAYS, MONTHS } from '@/lib/store';
 
 export default function AgendaPage() {
+  const [profile] = useProfile();
+  const showPlantao = (profile?.features || {}).plantao === true;
   const [schedule, setSchedule] = useLocalStorage('schedule', []);
   const [shifts, setShifts] = useLocalStorage('shifts', []);
   const [tasks, setTasks] = useLocalStorage('tasks', []);
@@ -345,10 +347,12 @@ export default function AgendaPage() {
             flex: 1, padding: 14, borderRadius: 14, fontSize: 14, fontWeight: 700,
             background: THEME.primary, color: '#fff',
           }}>+ Evento</button>
-          <button onClick={() => setShowAddShift(true)} style={{
-            flex: 1, padding: 14, borderRadius: 14, fontSize: 14, fontWeight: 700,
-            background: dayShift ? THEME.danger + '40' : THEME.danger, color: '#fff',
-          }}>🏥 Plantao</button>
+          {showPlantao && (
+            <button onClick={() => setShowAddShift(true)} style={{
+              flex: 1, padding: 14, borderRadius: 14, fontSize: 14, fontWeight: 700,
+              background: dayShift ? THEME.danger + '40' : THEME.danger, color: '#fff',
+            }}>🏥 Plantao</button>
+          )}
         </div>
       </div>
     </>

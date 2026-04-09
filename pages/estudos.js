@@ -1,10 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Head from 'next/head';
-import { useLocalStorage, todayStr, formatDate, daysUntil, isFuture, isPast, genId, THEME, WEEKDAYS_FULL } from '@/lib/store';
+import { useLocalStorage, useProfile, todayStr, formatDate, daysUntil, isFuture, isPast, genId, THEME, WEEKDAYS_FULL, AGE_GROUPS } from '@/lib/store';
 
 const DEFAULT_PROGRAMS = [
-  { id: 'pg1', name: 'Pos-Graduacao 1', institution: '', classes: [], deadlines: [], notes: '' },
-  { id: 'pg2', name: 'Pos-Graduacao 2', institution: '', classes: [], deadlines: [], notes: '' },
+  { id: 'pg1', name: 'Programa 1', institution: '', classes: [], deadlines: [], notes: '' },
+  { id: 'pg2', name: 'Programa 2', institution: '', classes: [], deadlines: [], notes: '' },
 ];
 
 const STATUS_MAP = {
@@ -14,7 +14,16 @@ const STATUS_MAP = {
 };
 
 export default function EstudosPage() {
-  const [postgrad, setPostgrad] = useLocalStorage('postgrad', DEFAULT_PROGRAMS);
+  const [profile] = useProfile();
+  const educationLabel = profile?.educationLabel || 'Estudos';
+  const programLabels = profile?.studyProgramLabels || ['Programa 1', 'Programa 2'];
+
+  const initialPrograms = [
+    { id: 'pg1', name: programLabels[0] || 'Programa 1', institution: '', classes: [], deadlines: [], notes: '' },
+    { id: 'pg2', name: programLabels[1] || 'Programa 2', institution: '', classes: [], deadlines: [], notes: '' },
+  ];
+
+  const [postgrad, setPostgrad] = useLocalStorage('postgrad', initialPrograms);
   const [studyLog, setStudyLog] = useLocalStorage('studyLog', []);
   const [activeProgram, setActiveProgram] = useState(0);
   const [showAddClass, setShowAddClass] = useState(false);
@@ -91,7 +100,7 @@ export default function EstudosPage() {
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 100px' }}>
         {/* Header */}
         <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>📚 Estudos</h1>
-        <p style={{ fontSize: 13, color: THEME.textMuted, marginBottom: 16 }}>Gerencie suas pos-graduacoes</p>
+        <p style={{ fontSize: 13, color: THEME.textMuted, marginBottom: 16 }}>Gerencie seus programas de {educationLabel.toLowerCase()}</p>
 
         {/* Program Selector */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
@@ -112,7 +121,7 @@ export default function EstudosPage() {
         {editingProgram ? (
           <div style={{ background: THEME.bgCard, border: `1px solid ${THEME.secondary}40`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
             <input value={program.name} onChange={e => updateProgram('name', e.target.value)}
-              placeholder="Nome da pos-graduacao" style={{
+              placeholder="Nome do programa" style={{
                 width: '100%', padding: 10, borderRadius: 10, fontSize: 14, marginBottom: 8,
                 background: THEME.bgInput, border: `1px solid ${THEME.border}`, color: THEME.text,
               }} />
