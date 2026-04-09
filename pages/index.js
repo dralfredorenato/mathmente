@@ -93,7 +93,7 @@ const SUBJECTS = {
       { label: '💡 Explicar', prompt: 'Explique este tema de historia de forma simples, com uma linha do tempo visual. Use passos numerados curtos.' },
       { label: '📝 Exemplo', prompt: 'Me de exemplos concretos e curiosidades sobre este periodo historico. Use comparacoes com coisas do dia a dia para facilitar.' },
       { label: '🧠 Macete', prompt: 'Me de um macete ou dica mnemonica para lembrar as datas e nomes importantes deste tema.' },
-      { label: '🎮 Quiz', prompt: 'Crie um quiz rapido com 3 questoes de multipla escolha sobre este tema de historia. Formate bem com 4 alternativas cada.' },
+      { label: '🎮 Quiz', prompt: 'Crie um quiz com 5 questoes de multipla escolha sobre este tema de historia, com nivel de dificuldade ALTO para 7o ano. As questoes devem exigir INTERPRETACAO e ANALISE, nao apenas memorizacao. Inclua: 1) questoes que relacionem CAUSAS e CONSEQUENCIAS, 2) questoes com alternativas parecidas que exijam atencao aos detalhes (datas, nomes, eventos), 3) pelo menos 1 questao que conecte este tema com outros temas do T1. Formate com 4 alternativas cada e indique a resposta correta com explicacao breve.' },
       { label: '📅 Linha do Tempo', prompt: 'Monte uma linha do tempo visual e resumida dos eventos mais importantes deste tema, com datas e o que aconteceu em cada uma.' },
       { label: '🔗 Causa e Efeito', prompt: 'Explique as relacoes de CAUSA e EFEITO deste tema. O que causou o que? Use setas ou numeracao para ficar claro.' },
       { label: '🐢 Mais devagar', prompt: 'Explique este tema de um jeito ainda mais simples, como se eu tivesse 10 anos. Use uma historia ou analogia.' },
@@ -102,7 +102,7 @@ const SUBJECTS = {
     parentQuickActions: [
       ['Estrategias de Estudo', 'Quais as melhores estrategias para estudar historia (Imperio Romano ao Medieval)? Foco em datas e sequencia de eventos.'],
       ['Plano Revisao Hoje', 'Crie um plano de revisao para hoje cobrindo os 8 topicos do T1 de historia (Roma ate Tratado de Verdun). A prova e amanha!'],
-      ['Simular Prova', 'Monte um simulado de historia com questoes sobre: auge de Roma, Cristianismo, crise sec III, povos germanicos, queda de Roma, mundo medieval, Carolingios e Tratado de Verdun.'],
+      ['Simular Prova', 'Monte um simulado COMPLETO de historia com 10 questoes de nivel DIFICIL cobrindo todos os 8 temas do T1: auge de Roma, Cristianismo, crise sec III, povos germanicos, queda de Roma, mundo medieval, Carolingios e Tratado de Verdun. As questoes devem exigir ANALISE CRITICA, relacao entre causas e consequencias, e conexoes entre os temas. Inclua alternativas com pegadinhas sutis (datas e nomes parecidos). Formate como prova real com gabarito comentado ao final.'],
       ['Conexoes-Chave', 'Explique as conexoes entre crise do escravismo, ruralizacao e formacao dos reinos germanicos - esse e o ponto central da transicao Antiguidade-Medieval.']
     ],
     test: { name: 'T1 Historia', date: '2026-04-09', details: '7o ano | Do Imperio Romano ao Mundo Medieval | Foco: crise do escravismo, ruralizacao e formacao dos reinos germanicos' }
@@ -121,7 +121,7 @@ function getContextualSuggestions(lastAssistantMessage, selectedTopic, messageCo
 
   // If topic is selected, offer topic-specific actions
   if (selectedTopic) {
-    suggestions.push({ label: '🎮 Quiz sobre isso', prompt: 'Crie um quiz rapido de 3 questoes sobre o que voce acabou de explicar. Multipla escolha com 4 alternativas.' });
+    suggestions.push({ label: '🎮 Quiz sobre isso', prompt: 'Crie um quiz de 5 questoes de nivel DIFICIL sobre o que voce acabou de explicar. Use questoes que exijam analise e interpretacao, com alternativas parecidas que testem atencao. Inclua questoes de causa e efeito. Multipla escolha com 4 alternativas e resposta comentada.' });
     suggestions.push({ label: '🧠 Macete', prompt: 'Me de um macete ou dica para memorizar o que voce acabou de explicar.' });
   }
 
@@ -132,7 +132,7 @@ function getContextualSuggestions(lastAssistantMessage, selectedTopic, messageCo
       suggestions.push({ label: '📝 Outro exemplo', prompt: 'Me de mais um exemplo diferente sobre esse mesmo assunto.' });
     }
     if (msg.includes('quiz') || msg.includes('alternativa') || msg.includes('resposta')) {
-      suggestions.push({ label: '🎯 Mais questoes', prompt: 'Crie mais 3 questoes diferentes sobre o mesmo tema, aumentando um pouco a dificuldade.' });
+      suggestions.push({ label: '🎯 Mais questoes', prompt: 'Crie mais 5 questoes diferentes sobre o mesmo tema, com dificuldade AINDA MAIOR. Use questoes que misturem temas, exijam analise de causa e efeito, e tenham alternativas com pegadinhas sutis. Inclua pelo menos 1 questao que exija comparar periodos ou eventos diferentes.' });
       suggestions.push({ label: '✅ Corrigir', prompt: 'Me explique a resposta correta de cada questao e por que as outras alternativas estao erradas.' });
     }
     if (msg.includes('resumo') || msg.includes('pontos')) {
@@ -271,7 +271,12 @@ function ExerciseView({ onBack, onAskAI }) {
   const [showAnswer, setShowAnswer] = useState(false);
   const [userAnswer, setUserAnswer] = useState('');
   const [selectedOption, setSelectedOption] = useState(null);
-  const [completed, setCompleted] = useState({});
+  const [completed, setCompleted] = useState(() => loadExerciseProgress());
+
+  // Save exercise progress when it changes
+  useEffect(() => {
+    if (Object.keys(completed).length > 0) saveExerciseProgress(completed);
+  }, [completed]);
 
   if (!selectedList) {
     return (
@@ -381,7 +386,7 @@ function ExerciseView({ onBack, onAskAI }) {
 function StudentView({ subject, onBack, studentName }) {
   const config = SUBJECTS[subject];
   const nameContext = studentName ? ' O(a) aluno(a) se chama ' + studentName + '.' : '';
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => loadChatHistory('student_' + subject));
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState(null);
@@ -398,11 +403,15 @@ function StudentView({ subject, onBack, studentName }) {
     const msgs = getMessages().filter(m => m.from === 'parent');
     setParentNotes(msgs);
     if (msgs.some(m => !m.read)) setShowNotes(true);
-    markMessagesRead();
   }, []);
 
   // Save XP when it changes
   useEffect(() => { saveXp(xp); }, [xp]);
+
+  // Save chat history when messages change
+  useEffect(() => {
+    if (messages.length > 0) saveChatHistory('student_' + subject, messages);
+  }, [messages, subject]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -554,7 +563,7 @@ function StudentView({ subject, onBack, studentName }) {
         <div style={{ margin: '0 20px', background: '#FEF3C7', borderRadius: 12, padding: 16, border: '1px solid #FCD34D' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <h4 style={{ margin: 0, fontSize: 14, color: '#92400E' }}>💌 Recados do Responsavel</h4>
-            <button onClick={() => setShowNotes(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#92400E' }}>✕</button>
+            <button onClick={() => { setShowNotes(false); markMessagesRead(); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#92400E' }}>✕</button>
           </div>
           {parentNotes.slice(-3).map((n, i) => (
             <div key={i} style={{ background: '#FFFBEB', borderRadius: 8, padding: '8px 12px', marginBottom: 4, fontSize: 14, color: '#78350F' }}>
@@ -625,20 +634,39 @@ function StudentView({ subject, onBack, studentName }) {
 function ParentView({ subject, onBack }) {
   const config = SUBJECTS[subject];
   const [tab, setTab] = useState('overview');
-  const [messages, setMessages] = useState([]);
+  const [simulatorMessages, setSimulatorMessages] = useState(() => loadChatHistory('parent_simulator_' + subject));
+  const [consultantMessages, setConsultantMessages] = useState(() => loadChatHistory('parent_consultant_' + subject));
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [newContent, setNewContent] = useState('');
   const [note, setNote] = useState('');
   const [checkedTopics, setCheckedTopics] = useState(() => getChecklist(subject));
-  const [flashcards, setFlashcards] = useState([]);
+  const [flashcards, setFlashcards] = useState(() => loadFlashcards(subject));
   const [flippedCards, setFlippedCards] = useState({});
   const [generatingCards, setGeneratingCards] = useState(false);
   const chatEndRef = useRef(null);
 
+  // Determine which messages/setMessages to use based on current tab
+  const isSimulator = tab === 'simulator';
+  const messages = isSimulator ? simulatorMessages : consultantMessages;
+  const setMessages = isSimulator ? setSimulatorMessages : setConsultantMessages;
+
+  // Save chat histories when they change
+  useEffect(() => {
+    if (simulatorMessages.length > 0) saveChatHistory('parent_simulator_' + subject, simulatorMessages);
+  }, [simulatorMessages, subject]);
+
+  useEffect(() => {
+    if (consultantMessages.length > 0) saveChatHistory('parent_consultant_' + subject, consultantMessages);
+  }, [consultantMessages, subject]);
+
+  // Save flashcards when they change
+  useEffect(() => {
+    if (flashcards.length > 0) saveFlashcardsData(subject, flashcards);
+  }, [flashcards, subject]);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [simulatorMessages, consultantMessages]);
 
   const sendMessage = async (text) => {
     if (!text.trim()) return;
@@ -1321,6 +1349,45 @@ function saveXp(xp) {
   saveFamily(family);
 }
 
+function loadChatHistory(key) {
+  if (typeof window === 'undefined') return [];
+  try {
+    const data = localStorage.getItem('estudamente_chat_' + key);
+    return data ? JSON.parse(data) : [];
+  } catch { return []; }
+}
+
+function saveChatHistory(key, messages) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('estudamente_chat_' + key, JSON.stringify(messages));
+}
+
+function loadExerciseProgress() {
+  if (typeof window === 'undefined') return {};
+  try {
+    const data = localStorage.getItem('estudamente_exercises');
+    return data ? JSON.parse(data) : {};
+  } catch { return {}; }
+}
+
+function saveExerciseProgress(completed) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('estudamente_exercises', JSON.stringify(completed));
+}
+
+function loadFlashcards(subject) {
+  if (typeof window === 'undefined') return [];
+  try {
+    const data = localStorage.getItem('estudamente_flashcards_' + subject);
+    return data ? JSON.parse(data) : [];
+  } catch { return []; }
+}
+
+function saveFlashcardsData(subject, cards) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('estudamente_flashcards_' + subject, JSON.stringify(cards));
+}
+
 // ============================
 // SETUP SCREEN (first time)
 // ============================
@@ -1430,6 +1497,14 @@ export default function Home() {
   useEffect(() => {
     setFamily(loadFamily());
   }, []);
+
+  // Refresh family data when returning to role selector (role/subject change)
+  useEffect(() => {
+    if (!role || !subject) {
+      const fresh = loadFamily();
+      if (fresh) setFamily(fresh);
+    }
+  }, [role, subject]);
 
   // Loading state
   if (family === undefined) return null;
