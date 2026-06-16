@@ -37,7 +37,7 @@ const SUBJECTS = {
       ['Exercicios em Casa', 'Sugira exercicios praticos e rapidos sobre operacoes com numeros racionais (fracoes), usando os hacks da borboleta e do KFC.'],
       ['Como Explicar', 'Como eu, pai/mae, posso explicar a regra dos sinais (regra do namoro) e o hack do elevador para inteiros de um jeito simples em casa?']
     ],
-    test: { name: 'T2 Matematica', date: '2026-06-23', details: '6 topicos: Operacoes com inteiros, Racionais (conceitos e operacoes), Propriedades das potencias, Raizes na reta numerica e Expressoes algebricas / valor numerico' }
+    test: { name: 'T2 Matematica', date: '2026-06-18', details: '6 topicos: Operacoes com inteiros, Racionais (conceitos e operacoes), Propriedades das potencias, Raizes na reta numerica e Expressoes algebricas / valor numerico' }
   },
   portuguese: {
     id: 'portuguese',
@@ -1449,7 +1449,7 @@ export default function Home() {
       <h1 style={{ color: '#fff', fontSize: 48, marginBottom: 8, textAlign: 'center' }}>🧠 EstudaMente</h1>
       <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 18, marginBottom: 4 }}>Plataforma Multidimensional de Estudos</p>
       <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, marginBottom: 8 }}>Ola, familia de <strong style={{ color: '#FBBF24' }}>{studentName}</strong>!</p>
-      <p style={{ color: '#FBBF24', fontSize: 14, marginBottom: 40 }}>📖 Portugues 08/04 | 📜 Historia 09/04 | 🧮 Matematica T2 23/06</p>
+      <p style={{ color: '#FBBF24', fontSize: 14, marginBottom: 40 }}>📖 Portugues 08/04 | 📜 Historia 09/04 | 🧮 Matematica T2 18/06</p>
 
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
         <button onClick={() => setRole('student')} style={{
