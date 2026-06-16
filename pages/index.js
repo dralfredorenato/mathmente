@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
+import { BANCO_T2 } from '../lib/bancoT2';
 
 // ============================
 // SUBJECT CONFIGURATIONS
@@ -12,31 +13,31 @@ const SUBJECTS = {
     emoji: '🧮',
     tutorName: 'MathMente',
     colors: { primary: '#6C5CE7', secondary: '#A855F7', bg: 'linear-gradient(135deg, #FFF5F5 0%, #FFF0E6 100%)', header: 'linear-gradient(135deg, #6C5CE7, #A855F7)' },
-    systemPrompt: 'Voce e a MathMente, uma tutora de matematica super paciente e divertida para o 7o ano. REGRAS: 1) Respostas CURTAS (maximo 150 palavras). 2) Use emojis com moderacao. 3) Passos numerados. 4) Linguagem simples e acessivel. 5) Sempre encoraje.',
-    parentSystemPrompt: 'Voce e um consultor pedagogico especializado em matematica. Ajude o responsavel a criar estrategias de estudo. Seja pratico e objetivo.',
+    systemPrompt: 'Voce e a MathMente, tutora de matematica do 7o ano: paciente, divertida e ADHD-friendly. Foque EXCLUSIVAMENTE nos 6 topicos do Teste 2 (T2): 1) Operacoes com numeros inteiros; 2) Conceitos iniciais dos numeros racionais; 3) Operacoes com numeros racionais; 4) Propriedades das potencias; 5) Localizacao de raizes na reta numerica; 6) Expressoes algebricas e valor numerico. Se a aluna perguntar de outro assunto, redirecione com carinho para esses topicos. REGRA DE OURO: nunca de a resposta direta de cara — primeiro 1 dica, deixe tentar, depois revele o passo a passo. 1 ideia por vez, frases curtas, use emoji so para marcar etapa (✅ ⚠️ 👉). Conecte com a vida real (dinheiro, elevador, termometro, pizza, jogo). Comemore CADA acerto. USE SEMPRE os hacks e mnemonicos: regra do namoro (sinais: igual da +, diferente da −); hack do elevador (somar/subtrair inteiros, + sobe e − desce); KFC 🍗 (dividir fracao: repete-inverte-multiplica); borboleta 🦋 (somar/comparar fracoes cruzando em X); tabela das potencias (multiplicou mesma base→SOMA expoente, dividiu→SUBTRAI, potencia de potencia→MULTIPLICA, expoente 0→1, expoente 1→ela mesma); "entre quem" 🎯 (raiz nao exata fica entre dois quadrados perfeitos vizinhos); PaPoMuDiSuSo (ordem das contas: Parenteses, Potencias, Multiplicacao/Divisao, Subtracao/Soma); "troca a letra pelo numero" 🔑 (valor numerico). Cuidado com as armadilhas: -2² nao e igual a (-2)²; e 2³+2² NAO soma expoente. REGRAS: 1) Respostas CURTAS (maximo 150 palavras). 2) Passos numerados quando precisar. 3) Linguagem simples e acessivel. 4) Sempre encoraje.',
+    parentSystemPrompt: 'Voce e um consultor pedagogico de matematica (7o ano) ajudando o responsavel a preparar a aluna para o Teste 2 (T2). Os 6 topicos do T2 sao: Operacoes com numeros inteiros; Conceitos iniciais dos numeros racionais; Operacoes com numeros racionais; Propriedades das potencias; Localizacao de raizes na reta numerica; Expressoes algebricas e valor numerico. Sugira estrategias praticas e atividades para fazer em casa, usando os mnemonicos do app (regra do namoro, hack do elevador, KFC, borboleta, tabela das potencias, "entre quem", PaPoMuDiSuSo, "troca a letra"). Seja pratico e objetivo.',
     topics: [
-      { id: 1, name: 'Sequencias', emoji: '🔢', desc: 'Sequencias numericas' },
-      { id: 2, name: 'Primos e Compostos', emoji: '⭐', desc: 'Numeros primos e compostos' },
-      { id: 3, name: 'Multiplos e Divisores', emoji: '✖️', desc: 'Multiplos e divisores' },
-      { id: 4, name: 'MMC e MDC', emoji: '🎯', desc: 'Minimo multiplo comum e maximo divisor comum' },
-      { id: 5, name: 'Divisibilidade', emoji: '📏', desc: 'Criterios de divisibilidade' },
-      { id: 6, name: 'Numeros Inteiros', emoji: '➕➖', desc: 'Conjunto dos numeros inteiros, adicao e subtracao' }
+      { id: 1, name: 'Inteiros', emoji: '➕➖', desc: 'Operacoes com numeros inteiros: soma, subtracao, multiplicacao e divisao (regra do namoro e hack do elevador)' },
+      { id: 2, name: 'Racionais (Conceito)', emoji: '🍕', desc: 'Conceitos iniciais dos numeros racionais: fracoes, equivalencia, comparacao (borboleta) e decimais' },
+      { id: 3, name: 'Racionais (Operacoes)', emoji: '🦋', desc: 'Operacoes com numeros racionais: somar/subtrair (borboleta), multiplicar e dividir (KFC) fracoes e decimais' },
+      { id: 4, name: 'Potencias', emoji: '🧠', desc: 'Propriedades das potencias: somar/subtrair expoentes, potencia de potencia, expoente 0 e 1' },
+      { id: 5, name: 'Raizes na Reta', emoji: '🎯', desc: 'Localizacao de raizes na reta numerica e quadrados perfeitos ("entre quais inteiros")' },
+      { id: 6, name: 'Expressoes', emoji: '🔑', desc: 'Expressoes algebricas e valor numerico: troca a letra, termos semelhantes e ordem das contas (PaPoMuDiSuSo)' }
     ],
     quickActions: [
       { label: '💡 Explicar', prompt: 'Explique este tema de forma simples, com exemplos do dia a dia. Use passos numerados curtos.' },
       { label: '📝 Exemplo', prompt: 'Me de um exemplo pratico e resolvido passo a passo deste tema. Use numeros simples.' },
-      { label: '🧠 Macete', prompt: 'Me de um macete ou dica mnemonica para lembrar este conceito facilmente.' },
-      { label: '🎮 Quiz', prompt: 'Crie um quiz rapido com 3 questoes de multipla escolha sobre este tema. Formate bem.' },
+      { label: '🧠 Hack/Macete', prompt: 'Me ensine o hack ou mnemonico do app para este tema (regra do namoro, elevador, KFC, borboleta, tabela das potencias, "entre quem", PaPoMuDiSuSo ou "troca a letra").' },
+      { label: '🎮 Quiz', prompt: 'Crie um quiz rapido com 3 questoes de multipla escolha sobre este tema. Me de 1 dica antes da resposta. Formate bem.' },
       { label: '🐢 Mais devagar', prompt: 'Explique este tema de um jeito ainda mais simples, como se eu tivesse 10 anos.' },
       { label: '📋 Resumo', prompt: 'Faca um resumo super curto (maximo 5 linhas) dos pontos mais importantes deste tema.' }
     ],
     parentQuickActions: [
-      ['Estrategias de Estudo', 'Quais as melhores estrategias de estudo para matematica?'],
-      ['Plano de Revisao', 'Crie um plano de revisao de 3 dias para o T1 de matematica'],
-      ['Exercicios', 'Sugira exercicios praticos e rapidos sobre numeros inteiros'],
-      ['Desempenho', 'Como avaliar se o aluno esta progredindo nos estudos?']
+      ['Estrategias de Estudo', 'Quais as melhores estrategias para estudar os 6 topicos do T2 de matematica (inteiros, racionais, potencias, raizes na reta e expressoes algebricas)?'],
+      ['Plano de Revisao', 'Crie um plano de revisao de 3 dias para o T2 de matematica cobrindo inteiros, racionais (conceitos e operacoes), potencias, raizes na reta e expressoes algebricas.'],
+      ['Exercicios em Casa', 'Sugira exercicios praticos e rapidos sobre operacoes com numeros racionais (fracoes), usando os hacks da borboleta e do KFC.'],
+      ['Como Explicar', 'Como eu, pai/mae, posso explicar a regra dos sinais (regra do namoro) e o hack do elevador para inteiros de um jeito simples em casa?']
     ],
-    test: { name: 'T1 Matematica', date: '2026-04-10', details: '15 questoes: 3 objetivas + 12 desenvolvimento (peso 0,2 cada)' }
+    test: { name: 'T2 Matematica', date: '2026-06-23', details: '6 topicos: Operacoes com inteiros, Racionais (conceitos e operacoes), Propriedades das potencias, Raizes na reta numerica e Expressoes algebricas / valor numerico' }
   },
   portuguese: {
     id: 'portuguese',
@@ -157,81 +158,36 @@ function getContextualSuggestions(lastAssistantMessage, selectedTopic, messageCo
 }
 
 // ============================
-// EXERCISE LISTS (Extracted from ionica platform)
+// EXERCISE LISTS (T2 - geradas a partir do banco de questoes)
 // ============================
 
-const EXERCISE_LISTS = [
-  {
-    id: 'lista1',
-    title: 'Lista 1 - Sondagem/Revisao',
-    desc: 'Fracoes e decimais (revisao)',
-    emoji: '📝',
-    questions: [
-      { id: 1, text: 'Calcule: a) 2/5 + 1/3  b) 7/8 - 1/4  c) 3/4 x 2/5  d) 5/6 ÷ 2/3', type: 'open', answer: 'a) 11/15  b) 5/8  c) 6/20 = 3/10  d) 15/12 = 5/4' },
-      { id: 2, text: 'Transforme em numero decimal: a) 3/4  b) 1/5  c) 7/8  d) 2/3', type: 'open', answer: 'a) 0,75  b) 0,2  c) 0,875  d) 0,666...' },
-      { id: 3, text: 'Transforme em fracao: a) 0,25  b) 0,8  c) 0,125  d) 1,5', type: 'open', answer: 'a) 1/4  b) 4/5  c) 1/8  d) 3/2' },
-      { id: 4, text: 'Maria comeu 2/8 de uma pizza e Joao comeu 3/8. Que fracao da pizza foi comida? Quanto sobrou?', type: 'open', answer: 'Comida: 2/8 + 3/8 = 5/8. Sobrou: 3/8' },
-      { id: 5, text: 'Um terreno tem 3/5 de area gramada. Se o terreno tem 200 m², qual a area gramada?', type: 'open', answer: '3/5 x 200 = 120 m²' },
-      { id: 6, text: 'Coloque em ordem crescente: 1/2, 3/4, 1/3, 2/5, 5/6', type: 'open', answer: '1/3 < 2/5 < 1/2 < 3/4 < 5/6' }
-    ]
-  },
-  {
-    id: 'lista2',
-    title: 'Lista 2 - MMC e MDC',
-    desc: 'Problemas de minimo multiplo comum e maximo divisor comum',
-    emoji: '🎯',
-    questions: [
-      { id: 1, text: 'Dois onibus partem do mesmo terminal. O primeiro a cada 12 min e o segundo a cada 18 min. Se partiram juntos as 8h, quando partirao juntos novamente?', type: 'open', answer: 'MMC(12,18) = 36. Partirao juntos as 8h36min.' },
-      { id: 2, text: 'Uma floricultura recebeu 36 rosas e 48 margaridas. Quer montar buques iguais, com maior numero de flores possivel. Quantas flores em cada buque?', type: 'open', answer: 'MDC(36,48) = 12. Cada buque tera 12 flores (3 rosas e 4 margaridas).' },
-      { id: 3, text: 'Ana vai a biblioteca a cada 4 dias e Bia a cada 6 dias. Se foram juntas hoje, daqui a quantos dias se encontrarao la novamente?', type: 'open', answer: 'MMC(4,6) = 12. Daqui a 12 dias.' },
-      { id: 4, text: 'Um relogio toca a cada 15 min e outro a cada 20 min. Se tocaram juntos ao meio-dia, quando tocarao juntos novamente?', type: 'open', answer: 'MMC(15,20) = 60 min. Tocarao juntos as 13h.' },
-      { id: 5, text: 'Tenho 24 balas de morango e 32 de chocolate. Quero distribuir igualmente em saquinhos sem sobrar nenhuma. Qual o maior numero de saquinhos?', type: 'open', answer: 'MDC(24,32) = 8 saquinhos (3 morango e 4 chocolate cada).' },
-      { id: 6, text: 'Tres sinais luminosos piscam a cada 2s, 3s e 5s. Se piscaram juntos, depois de quantos segundos piscarao juntos novamente?', type: 'open', answer: 'MMC(2,3,5) = 30 segundos.' },
-      { id: 7, text: 'Uma loja vende pacotes de suco com 6 unidades e pacotes de biscoito com 8. Qual o menor numero de sucos e biscoitos para ter a mesma quantidade?', type: 'open', answer: 'MMC(6,8) = 24. Precisa de 4 pacotes de suco e 3 de biscoito.' }
-    ]
-  },
-  {
-    id: 'lista3',
-    title: 'Lista 3 - Numeros Inteiros',
-    desc: 'Conceitos iniciais e adicao algebrica',
-    emoji: '➕➖',
-    questions: [
-      { id: 1, text: 'Determine o valor absoluto (modulo) de: a) |+7|  b) |-3|  c) |0|  d) |-15|  e) |+22|', type: 'open', answer: 'a) 7  b) 3  c) 0  d) 15  e) 22' },
-      { id: 2, text: 'Determine o oposto (simetrico) de: a) +8  b) -5  c) +12  d) -20  e) 0', type: 'open', answer: 'a) -8  b) +5  c) -12  d) +20  e) 0' },
-      { id: 3, text: 'Coloque em ordem crescente: -7, +3, -1, 0, +5, -4, +2', type: 'open', answer: '-7 < -4 < -1 < 0 < +2 < +3 < +5' },
-      { id: 4, text: 'Coloque em ordem decrescente: +6, -2, -8, +1, 0, -5, +4', type: 'open', answer: '+6 > +4 > +1 > 0 > -2 > -5 > -8' },
-      { id: 5, text: 'Compare usando > , < ou = : a) -3 ___ +2  b) -5 ___ -1  c) |+4| ___ |-4|  d) 0 ___ -7', type: 'open', answer: 'a) -3 < +2  b) -5 < -1  c) |+4| = |-4|  d) 0 > -7' },
-      { id: 6, text: 'Calcule: a) (+5) + (+3)  b) (-4) + (-6)  c) (+8) + (-3)  d) (-7) + (+2)  e) (-9) + (+9)', type: 'open', answer: 'a) +8  b) -10  c) +5  d) -5  e) 0' },
-      { id: 7, text: 'Calcule: a) (+10) - (+4)  b) (-3) - (-8)  c) (+6) - (+9)  d) (-5) - (+3)  e) 0 - (-4)', type: 'open', answer: 'a) +6  b) +5  c) -3  d) -8  e) +4' },
-      { id: 8, text: 'Simplifique a expressao: -3 + 7 - 2 + 5 - 8 + 1', type: 'open', answer: 'Positivos: 7 + 5 + 1 = 13. Negativos: -3 - 2 - 8 = -13. Resultado: 0' },
-      { id: 9, text: 'A temperatura era de 3°C e caiu 8°C. Qual a temperatura final?', type: 'open', answer: '3 - 8 = -5°C' },
-      { id: 10, text: 'Um submarino esta a -40m. Subiu 15m e depois desceu 8m. Qual a profundidade final?', type: 'open', answer: '-40 + 15 - 8 = -33m' },
-      { id: 11, text: 'No banco, Pedro tinha R$250. Fez um saque de R$300. Qual seu saldo?', type: 'open', answer: '250 - 300 = -50 (devendo R$50)' },
-      { id: 12, text: 'Calcule: a) (-2) + (+5) - (-3) + (-4) - (+1)  b) |(-3) + (+7)| - |(-2) - (+4)|', type: 'open', answer: 'a) -2 + 5 + 3 - 4 - 1 = +1  b) |+4| - |-6| = 4 - 6 = -2' }
-    ]
-  },
-  {
-    id: 'lista5',
-    title: 'Lista 5 - Revisao T1',
-    desc: 'Revisao completa para a prova T1 (com gabarito)',
-    emoji: '🏆',
-    questions: [
-      { id: 1, text: 'Escreva os 5 primeiros termos da sequencia cujo termo geral e an = 3n - 1', type: 'open', answer: 'a1=2, a2=5, a3=8, a4=11, a5=14' },
-      { id: 2, text: 'Qual o proximo termo da sequencia: 2, 6, 18, 54, ...?', type: 'choice', options: ['a) 108', 'b) 162', 'c) 72', 'd) 216'], answer: 'b) 162 (multiplicando por 3)' },
-      { id: 3, text: 'Classifique em primo ou composto: a) 17  b) 21  c) 29  d) 39  e) 2  f) 51', type: 'open', answer: 'Primos: 17, 29, 2. Compostos: 21 (3x7), 39 (3x13), 51 (3x17)' },
-      { id: 4, text: 'Decomponha em fatores primos: a) 60  b) 84  c) 120', type: 'open', answer: 'a) 60 = 2² x 3 x 5  b) 84 = 2² x 3 x 7  c) 120 = 2³ x 3 x 5' },
-      { id: 5, text: 'Determine todos os divisores de 36.', type: 'open', answer: 'D(36) = {1, 2, 3, 4, 6, 9, 12, 18, 36}' },
-      { id: 6, text: 'Calcule: a) MMC(12, 18)  b) MDC(24, 36)  c) MMC(8, 12, 15)', type: 'open', answer: 'a) MMC = 36  b) MDC = 12  c) MMC = 120' },
-      { id: 7, text: 'Dois alarmes tocam: um a cada 45min e outro a cada 60min. Se tocaram juntos as 7h, quando tocarao juntos novamente?', type: 'open', answer: 'MMC(45,60) = 180min = 3h. Tocarao as 10h.' },
-      { id: 8, text: 'Uma loja tem 72 camisetas e 48 calcas. Quer montar kits iguais usando todas. Qual o maior numero de kits?', type: 'open', answer: 'MDC(72,48) = 24 kits (3 camisetas e 2 calcas cada).' },
-      { id: 9, text: 'Verifique se 3456 e divisivel por 2, 3, 4, 5, 6, 8 e 9.', type: 'open', answer: 'Div por 2 (par), 3 (3+4+5+6=18), 4 (56÷4=14), 6 (div por 2 e 3), 8 (456÷8=57). NAO por 5, 9.' },
-      { id: 10, text: 'Represente na reta numerica e coloque em ordem crescente: +3, -5, -1, +4, 0, -3, +2', type: 'open', answer: '-5 < -3 < -1 < 0 < +2 < +3 < +4' },
-      { id: 11, text: 'Calcule: a) |(-8) + (+3)|  b) |-5| + |+5|  c) -|+7| + |-3|', type: 'open', answer: 'a) |-5| = 5  b) 5 + 5 = 10  c) -7 + 3 = -4' },
-      { id: 12, text: 'Determine o oposto de: a) +13  b) -8  c) |(-6)|  d) -(+4)', type: 'open', answer: 'a) -13  b) +8  c) oposto de 6 = -6  d) oposto de -4 = +4' },
-      { id: 13, text: 'A temperatura de uma cidade era -3°C pela manha. Subiu 8°C ao meio-dia e caiu 12°C a noite. Qual a temperatura final?', type: 'open', answer: '-3 + 8 - 12 = -7°C' }
-    ]
-  }
+const T2_LIST_DEFS = [
+  { id: 'inteiros', cat: 'Operações com Inteiros', title: 'Lista 1 - Operacoes com Inteiros', desc: 'Soma, subtracao, multiplicacao e divisao (regra do namoro e hack do elevador)', emoji: '➕➖' },
+  { id: 'rac-conceitos', cat: 'Racionais (Conceitos)', title: 'Lista 2 - Racionais: Conceitos', desc: 'Fracoes, equivalencia, comparacao (borboleta) e decimais', emoji: '🍕' },
+  { id: 'rac-operacoes', cat: 'Racionais (Operações)', title: 'Lista 3 - Racionais: Operacoes', desc: 'Somar/subtrair (borboleta), multiplicar e dividir (KFC) fracoes e decimais', emoji: '🦋' },
+  { id: 'potencias', cat: 'Potências', title: 'Lista 4 - Potencias', desc: 'Propriedades das potencias e armadilhas', emoji: '🧠' },
+  { id: 'raizes', cat: 'Raízes e Reta Numérica', title: 'Lista 5 - Raizes e Reta Numerica', desc: 'Raiz quadrada e "entre quais inteiros"', emoji: '🎯' },
+  { id: 'expressoes', cat: 'Expressões Algébricas', title: 'Lista 6 - Expressoes Algebricas', desc: 'Valor numerico (troca a letra), termos semelhantes e ordem das contas', emoji: '🔑' }
 ];
+
+const EXERCISE_LISTS = T2_LIST_DEFS.map(def => ({
+  id: def.id,
+  title: def.title,
+  desc: def.desc,
+  emoji: def.emoji,
+  questions: BANCO_T2
+    .filter(q => q.categoria === def.cat)
+    .map((q, i) => ({
+      id: i + 1,
+      text: q.pergunta,
+      type: q.tipo === 'multipla' ? 'choice' : 'open',
+      options: q.opcoes || null,
+      answer: q.resposta,
+      explanation: q.explicacao,
+      dica: q.dica,
+      dificuldade: q.dificuldade
+    }))
+}));
 
 // ============================
 // SHARED COMPONENTS
@@ -271,6 +227,7 @@ function ExerciseView({ onBack, onAskAI }) {
   const [showAnswer, setShowAnswer] = useState(false);
   const [userAnswer, setUserAnswer] = useState('');
   const [selectedOption, setSelectedOption] = useState(null);
+  const [showDica, setShowDica] = useState(false);
   const [completed, setCompleted] = useState({});
 
   if (!selectedList) {
@@ -280,12 +237,12 @@ function ExerciseView({ onBack, onAskAI }) {
           ← Voltar
         </button>
         <h2 style={{ color: '#2d3436', marginBottom: 4 }}>📚 Listas de Exercicios</h2>
-        <p style={{ color: '#9CA3AF', fontSize: 14, marginBottom: 20 }}>Pratique para o T1 de Matematica</p>
+        <p style={{ color: '#9CA3AF', fontSize: 14, marginBottom: 20 }}>Pratique para o T2 de Matematica ({BANCO_T2.length} questoes)</p>
         {EXERCISE_LISTS.map(list => {
-          const done = Object.keys(completed).filter(k => k.startsWith(list.id)).length;
+          const done = Object.keys(completed).filter(k => k.startsWith(list.id + '_')).length;
           const total = list.questions.length;
           return (
-            <button key={list.id} onClick={() => { setSelectedList(list); setCurrentQ(0); setShowAnswer(false); setUserAnswer(''); setSelectedOption(null); }} style={{
+            <button key={list.id} onClick={() => { setSelectedList(list); setCurrentQ(0); setShowAnswer(false); setUserAnswer(''); setSelectedOption(null); setShowDica(false); }} style={{
               display: 'block', width: '100%', textAlign: 'left', background: '#fff', border: '2px solid #E5E7EB', borderRadius: 12, padding: 16, marginBottom: 12, cursor: 'pointer'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -323,7 +280,7 @@ function ExerciseView({ onBack, onAskAI }) {
             {q.options.map((opt, i) => (
               <button key={i} onClick={() => setSelectedOption(i)} style={{
                 display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', marginBottom: 8, borderRadius: 8, cursor: 'pointer', fontSize: 14,
-                background: selectedOption === i ? (showAnswer ? (opt === q.answer || q.answer.startsWith(opt.substring(0,2)) ? '#D1FAE5' : '#FEE2E2') : '#EDE9FE') : '#F9FAFB',
+                background: showAnswer && opt === q.answer ? '#D1FAE5' : (selectedOption === i ? (showAnswer ? '#FEE2E2' : '#EDE9FE') : '#F9FAFB'),
                 border: selectedOption === i ? '2px solid #6C5CE7' : '1px solid #E5E7EB',
                 fontWeight: selectedOption === i ? 600 : 400
               }}>{opt}</button>
@@ -339,6 +296,13 @@ function ExerciseView({ onBack, onAskAI }) {
       </div>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+        {q.dica && (
+          <button onClick={() => setShowDica(!showDica)} style={{
+            background: showDica ? '#F59E0B' : '#FBBF24', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 16px', cursor: 'pointer', fontSize: 14
+          }}>
+            {showDica ? '🙈 Esconder Dica' : '💡 Dica'}
+          </button>
+        )}
         <button onClick={() => { setShowAnswer(!showAnswer); if (!showAnswer) { const key = selectedList.id + '_' + q.id; setCompleted(prev => ({...prev, [key]: true})); }}} style={{
           background: showAnswer ? '#EF4444' : '#10B981', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 16px', cursor: 'pointer', fontSize: 14
         }}>
@@ -351,20 +315,30 @@ function ExerciseView({ onBack, onAskAI }) {
         </button>
       </div>
 
+      {showDica && q.dica && (
+        <div style={{ background: '#FEF3C7', borderRadius: 12, padding: 16, marginBottom: 16, border: '1px solid #FCD34D' }}>
+          <div style={{ fontWeight: 700, marginBottom: 4, color: '#92400E' }}>💡 Dica:</div>
+          <div style={{ color: '#78350F', whiteSpace: 'pre-wrap' }}>{q.dica}</div>
+        </div>
+      )}
+
       {showAnswer && (
         <div style={{ background: '#D1FAE5', borderRadius: 12, padding: 16, marginBottom: 16 }}>
           <div style={{ fontWeight: 700, marginBottom: 4, color: '#065F46' }}>✅ Resposta:</div>
-          <div style={{ color: '#065F46', whiteSpace: 'pre-wrap' }}>{q.answer}</div>
+          <div style={{ color: '#065F46', whiteSpace: 'pre-wrap', fontWeight: 600 }}>{q.answer}</div>
+          {q.explanation && (
+            <div style={{ color: '#047857', whiteSpace: 'pre-wrap', marginTop: 8, fontSize: 14 }}>👉 {q.explanation}</div>
+          )}
         </div>
       )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-        <button onClick={() => { if (currentQ > 0) { setCurrentQ(currentQ - 1); setShowAnswer(false); setUserAnswer(''); setSelectedOption(null); }}} disabled={currentQ === 0} style={{
+        <button onClick={() => { if (currentQ > 0) { setCurrentQ(currentQ - 1); setShowAnswer(false); setUserAnswer(''); setSelectedOption(null); setShowDica(false); }}} disabled={currentQ === 0} style={{
           background: currentQ === 0 ? '#E5E7EB' : '#6C5CE7', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', cursor: currentQ === 0 ? 'default' : 'pointer', fontSize: 14
         }}>
           ← Anterior
         </button>
-        <button onClick={() => { if (currentQ < selectedList.questions.length - 1) { setCurrentQ(currentQ + 1); setShowAnswer(false); setUserAnswer(''); setSelectedOption(null); }}} disabled={currentQ >= selectedList.questions.length - 1} style={{
+        <button onClick={() => { if (currentQ < selectedList.questions.length - 1) { setCurrentQ(currentQ + 1); setShowAnswer(false); setUserAnswer(''); setSelectedOption(null); setShowDica(false); }}} disabled={currentQ >= selectedList.questions.length - 1} style={{
           background: currentQ >= selectedList.questions.length - 1 ? '#E5E7EB' : '#6C5CE7', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', cursor: currentQ >= selectedList.questions.length - 1 ? 'default' : 'pointer', fontSize: 14
         }}>
           Proxima →
@@ -1475,7 +1449,7 @@ export default function Home() {
       <h1 style={{ color: '#fff', fontSize: 48, marginBottom: 8, textAlign: 'center' }}>🧠 EstudaMente</h1>
       <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 18, marginBottom: 4 }}>Plataforma Multidimensional de Estudos</p>
       <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, marginBottom: 8 }}>Ola, familia de <strong style={{ color: '#FBBF24' }}>{studentName}</strong>!</p>
-      <p style={{ color: '#FBBF24', fontSize: 14, marginBottom: 40 }}>📖 Portugues 08/04 | 📜 Historia 09/04 | 🧮 Matematica 10/04</p>
+      <p style={{ color: '#FBBF24', fontSize: 14, marginBottom: 40 }}>📖 Portugues 08/04 | 📜 Historia 09/04 | 🧮 Matematica T2 23/06</p>
 
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
         <button onClick={() => setRole('student')} style={{
