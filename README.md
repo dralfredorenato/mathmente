@@ -4,7 +4,7 @@ Plataforma multidimensional de estudos com IA para apoio a alunos com TDAH.
 
 ## Materias
 
-- **MathMente** - Tutora de Matematica (sequencias, primos, MMC/MDC, divisibilidade, inteiros)
+- **MathMente** - Tutora de Matematica T2 (operacoes com inteiros, racionais - conceitos e operacoes, propriedades das potencias, raizes na reta numerica, expressoes algebricas e valor numerico)
 - **LetraMente** - Tutora de Portugues (interpretacao, gramatica, acentuacao, verbos, figuras de linguagem)
 
 ## Funcionalidades
