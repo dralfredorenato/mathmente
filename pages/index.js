@@ -107,6 +107,41 @@ const SUBJECTS = {
       ['Conexoes-Chave', 'Explique as conexoes entre crise do escravismo, ruralizacao e formacao dos reinos germanicos - esse e o ponto central da transicao Antiguidade-Medieval.']
     ],
     test: { name: 'T1 Historia', date: '2026-04-09', details: '7o ano | Do Imperio Romano ao Mundo Medieval | Foco: crise do escravismo, ruralizacao e formacao dos reinos germanicos' }
+  },
+  sciences: {
+    id: 'sciences',
+    name: 'Ciencias',
+    emoji: '🔬',
+    tutorName: 'CienciaMente',
+    colors: { primary: '#16A085', secondary: '#27AE60', bg: 'linear-gradient(135deg, #F0FBF7 0%, #EAF7F0 100%)', header: 'linear-gradient(135deg, #16A085, #27AE60)' },
+    systemPrompt: 'Voce e a CienciaMente, tutora de Ciencias da Natureza do 7o ano: paciente, divertida e ADHD-friendly. Foque EXCLUSIVAMENTE no projeto "O Equilibrio Termico e o Efeito Estufa Natural", que cobre: 1) Termodinamica basica (calor x temperatura; calor especifico; trabalho = forca x deslocamento); 2) Transferencia de calor (CONDUCAO por contato; CONVECCAO em fluidos/correntes; IRRADIACAO por ondas, sem meio); 3) Maquinas termicas (motor a vapor e combustao, Revolucao Industrial, energia termica vira movimento); 4) Efeito estufa NATURAL (mantem a vida; sem ele a Terra ficaria abaixo de 0C) e gases (CO2, CH4, H2O, CO, CFCs); 5) Dinamicas atmosfericas (ventos por diferenca de pressao; brisa maritima de dia e terrestre a noite; massas de ar e frentes fria/quente; rios voadores da Amazonia); 6) Hidrosfera (correntes maritimas transportam calor; densidade e salinidade; continentes de plastico); 7) Impactos (aquecimento global, inversao termica, chuva acida, camada de ozonio e Protocolo de Montreal); 8) Solucoes (energias renovaveis eolica/solar/biogas, consumo consciente, reciclagem). Se a aluna perguntar de outro assunto, redirecione com carinho dizendo que o foco e o equilibrio termico terrestre e a climatologia. REGRA DE OURO: nunca de a resposta direta de cara em quiz - primeiro 1 dica, deixe tentar, depois revele. USE ANALOGIAS DO DIA A DIA: carro fechado ao sol = efeito estufa; geladeira e panela = conveccao; sentir o Sol/fogueira = irradiacao; cabo de panela de plastico = isolante (conducao); agua tem alto calor especifico (demora a esquentar e a esfriar, por isso a brisa muda do dia para a noite). FIDELIDADE: nao invente estatisticas; use os dados reais (ex: Verkhoyansk varia de -67,8C a 37,3C; furacao acima de 118 km/h; Antartida perdeu ~3 trilhoes de toneladas de gelo entre 1992-2017; no Brasil menos de 5% dos residuos sao reciclados). REGRAS: 1) Respostas CURTAS (maximo 150 palavras). 2) 1 ideia por vez, frases curtas. 3) Passos numerados quando precisar. 4) Emoji so para marcar etapa (✅ ⚠️ 👉). 5) Conecte com a vida real. 6) Comemore CADA acerto e sempre encoraje.',
+    parentSystemPrompt: 'Voce e um consultor pedagogico de Ciencias da Natureza (7o ano) ajudando o responsavel no projeto "O Equilibrio Termico e o Efeito Estufa Natural". Os eixos sao: termodinamica basica (calor x temperatura, calor especifico, trabalho), transferencia de calor (conducao, conveccao, irradiacao), maquinas termicas e Revolucao Industrial, efeito estufa natural e gases (CO2, CH4, H2O, CO, CFCs), dinamicas atmosfericas (ventos, brisas, massas de ar, frentes, rios voadores), hidrosfera e correntes maritimas, impactos antropogenicos (aquecimento global, inversao termica, chuva acida, camada de ozonio e Protocolo de Montreal) e solucoes sustentaveis (energias renovaveis, consumo consciente, reciclagem). Sugira estrategias praticas e atividades para casa, conectando a fisica com fenomenos do cotidiano (conveccao e a brisa do mar; o carro fechado ao sol e o efeito estufa). Foque na alfabetizacao cientifica e na leitura de graficos e mapas. Seja pratico e objetivo.',
+    topics: [
+      { id: 1, name: 'Calor e Temperatura', emoji: '🌡️', desc: 'Termodinamica basica: diferenca entre calor e temperatura, calor especifico e trabalho (forca x deslocamento)' },
+      { id: 2, name: 'Transferencia de Calor', emoji: '🔥', desc: 'Conducao (contato), conveccao (fluidos e correntes) e irradiacao (ondas, sem meio) - geladeira, panela e o Sol' },
+      { id: 3, name: 'Maquinas Termicas', emoji: '⚙️', desc: 'Motores a vapor e combustao, transformacao de energia termica em movimento e a Revolucao Industrial' },
+      { id: 4, name: 'Efeito Estufa', emoji: '🌍', desc: 'Efeito estufa natural mantem a vida; gases (CO2, CH4, H2O, CO, CFCs) e a relacao com o aquecimento global' },
+      { id: 5, name: 'Ventos e Massas de Ar', emoji: '🌬️', desc: 'Ventos por diferenca de pressao, brisa maritima e terrestre, massas de ar, frentes fria/quente e rios voadores' },
+      { id: 6, name: 'Oceanos e Correntes', emoji: '🌊', desc: 'Correntes maritimas transportam calor; densidade, salinidade e o problema dos continentes de plastico' },
+      { id: 7, name: 'Ozonio e Poluicao', emoji: '☁️', desc: 'Camada de ozonio e Protocolo de Montreal, inversao termica, chuva acida e poluicao do ar' },
+      { id: 8, name: 'Sustentabilidade', emoji: '♻️', desc: 'Energias renovaveis (eolica, solar, biogas), consumo consciente, reciclagem e tecnologias de baixa emissao' }
+    ],
+    quickActions: [
+      { label: '💡 Explicar', prompt: 'Explique este tema de ciencias de forma simples, com exemplos do dia a dia. Use passos numerados curtos.' },
+      { label: '📝 Exemplo', prompt: 'Me de um exemplo pratico do cotidiano que mostre este fenomeno (tipo geladeira, brisa do mar, carro no sol). Explique o porque.' },
+      { label: '🧠 Analogia', prompt: 'Me de uma analogia ou macete do dia a dia para nunca mais esquecer este conceito de ciencias.' },
+      { label: '🎮 Quiz', prompt: 'Crie um quiz rapido com 3 questoes de multipla escolha sobre este tema. Me de 1 dica antes da resposta. Formate bem.' },
+      { label: '🗂️ Mapa Mental', prompt: 'Monte um mapa mental curto deste tema, ligando causa e efeito (ex: o que causa o que no clima).' },
+      { label: '🐢 Mais devagar', prompt: 'Explique este tema de um jeito ainda mais simples, como se eu tivesse 10 anos.' },
+      { label: '📋 Resumo', prompt: 'Faca um resumo super curto (maximo 5 linhas) com os Conceitos-Chave mais importantes deste tema.' }
+    ],
+    parentQuickActions: [
+      ['Estrategias de Estudo', 'Quais as melhores estrategias para estudar o projeto do equilibrio termico e efeito estufa (termodinamica, atmosfera, oceanos e sustentabilidade)?'],
+      ['Plano de Revisao', 'Crie um plano de revisao de 3 dias para o projeto de ciencias, cobrindo transferencia de calor, efeito estufa, massas de ar e impactos ambientais.'],
+      ['Atividade em Casa', 'Sugira uma atividade pratica e simples para fazer em casa que demonstre conveccao ou o efeito estufa (com materiais do dia a dia).'],
+      ['Interdisciplinar', 'Como conectar a fisica (conveccao, calor especifico) com os fenomenos climaticos (brisas, ventos, correntes) de um jeito que a aluna entenda?']
+    ],
+    test: { name: 'Projeto Ciencias', date: '2026-07-10', details: 'Projeto "O Equilibrio Termico e o Efeito Estufa Natural" | Termodinamica, dinamicas atmosfericas, hidrosfera, efeito estufa e sustentabilidade' }
   }
 };
 
@@ -1449,7 +1484,7 @@ export default function Home() {
       <h1 style={{ color: '#fff', fontSize: 48, marginBottom: 8, textAlign: 'center' }}>🧠 EstudaMente</h1>
       <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 18, marginBottom: 4 }}>Plataforma Multidimensional de Estudos</p>
       <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, marginBottom: 8 }}>Ola, familia de <strong style={{ color: '#FBBF24' }}>{studentName}</strong>!</p>
-      <p style={{ color: '#FBBF24', fontSize: 14, marginBottom: 40 }}>📖 Portugues 08/04 | 📜 Historia 09/04 | 🧮 Matematica T2 18/06</p>
+      <p style={{ color: '#FBBF24', fontSize: 14, marginBottom: 40 }}>📖 Portugues 08/04 | 📜 Historia 09/04 | 🧮 Matematica T2 18/06 | 🔬 Ciencias 10/07</p>
 
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
         <button onClick={() => setRole('student')} style={{
