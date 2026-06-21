@@ -25,5 +25,5 @@ Plataforma multidimensional de estudos com IA para apoio a alunos com TDAH.
 
 ## Variaveis de ambiente
 
-- `ANTHROPIC_API_KEY` (obrigatoria) - chave da API da Anthropic
+- `ANTHROPIC_API_KEY_MATHMENTE` (obrigatoria) - chave da API da Anthropic (aceita tambem `ANTHROPIC_API_KEY` como alternativa)
 - `ANTHROPIC_MODEL` (opcional) - id do modelo Claude (ex: claude-haiku-4-5, claude-sonnet-4-6, claude-opus-4-8). Padrao: claude-haiku-4-5
