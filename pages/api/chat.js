@@ -1,61 +1,53 @@
+import Anthropic from '@anthropic-ai/sdk';
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
           return res.status(405).json({ error: 'Method not allowed' });
     }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-          return res.status(500).json({ error: 'API key not configured' });
+          return res.status(500).json({ error: 'API key not configured (ANTHROPIC_API_KEY)' });
     }
 
   try {
         const { messages, system } = req.body;
 
-      const systemPrompt = system || 'Voce e um tutor de matematica especializado em TDAH.';
-
-      const contents = [];
-
-      if (system) {
-              contents.push({
-                        role: 'user',
-                        parts: [{ text: 'INSTRUCAO DO SISTEMA: ' + systemPrompt }]
-              });
-              contents.push({
-                        role: 'model',
-                        parts: [{ text: 'Entendido. Vou seguir essas instrucoes.' }]
-              });
+      if (!Array.isArray(messages) || messages.length === 0) {
+              return res.status(400).json({ error: 'messages e obrigatorio' });
       }
 
-      messages.forEach(m => {
-              contents.push({
-                        role: m.role === 'user' ? 'user' : 'model',
-                        parts: [{ text: m.content }]
-              });
+      const client = new Anthropic({ apiKey });
+
+      const systemPrompt = (system || 'Voce e um tutor paciente especializado em TDAH.')
+              + ' Responda em portugues, apenas com a resposta final para o usuario, sem mostrar seu raciocinio interno.';
+
+      // Mapeia o historico do app (roles user/assistant) para o formato da Messages API
+      const anthropicMessages = messages.map(m => ({
+              role: m.role === 'assistant' ? 'assistant' : 'user',
+              content: String(m.content ?? '')
+      }));
+
+      const response = await client.messages.create({
+              model: process.env.ANTHROPIC_MODEL || 'claude-opus-4-8',
+              max_tokens: 8192,
+              system: systemPrompt,
+              messages: anthropicMessages
       });
 
-      const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey;
-        const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                          contents: contents,
-                          generationConfig: {
-                                      maxOutputTokens: 2048,
-                                      temperature: 0.7
-                          }
-                })
-        });
+      const text = response.content
+              .filter(block => block.type === 'text')
+              .map(block => block.text)
+              .join('')
+              .trim();
 
-      const data = await response.json();
-
-      if (data.error) {
-              return res.status(500).json({ error: data.error.message });
-      }
-
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sem resposta';
-
-      return res.status(200).json({ content: text });
+      return res.status(200).json({ content: text || 'Sem resposta' });
   } catch (error) {
-        return res.status(500).json({ error: error.message });
+        if (error instanceof Anthropic.APIError) {
+              console.error('Anthropic API error:', error.status, error.message);
+              return res.status(error.status || 500).json({ error: error.message });
+        }
+        console.error('Chat handler error:', error);
+        return res.status(500).json({ error: error.message || 'Erro interno' });
   }
 }

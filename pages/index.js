@@ -450,7 +450,12 @@ function StudentView({ subject, onBack, studentName }) {
         })
       });
       const data = await res.json();
-      setMessages([...newMessages, { role: 'assistant', content: data.content || data.error || 'Erro ao processar' }]);
+      if (!res.ok || data.error || !data.content) {
+        console.error('Erro no chat:', data.error || ('HTTP ' + res.status));
+        setMessages([...newMessages, { role: 'assistant', content: 'Opa, tive um probleminha para responder agora 😅. Tenta de novo daqui a pouquinho? Se continuar, avisa o responsavel.' }]);
+      } else {
+        setMessages([...newMessages, { role: 'assistant', content: data.content }]);
+      }
     } catch (err) {
       setMessages([...newMessages, { role: 'assistant', content: 'Ops, algo deu errado. Tenta de novo?' }]);
     }
@@ -667,7 +672,11 @@ function ParentView({ subject, onBack }) {
         })
       });
       const data = await res.json();
-      setMessages([...newMessages, { role: 'assistant', content: data.content || data.error || 'Erro ao processar' }]);
+      if (!res.ok || data.error || !data.content) {
+        setMessages([...newMessages, { role: 'assistant', content: 'Nao foi possivel gerar a resposta agora. Detalhe tecnico: ' + (data.error || ('HTTP ' + res.status)) + '. Verifique a chave ANTHROPIC_API_KEY (e o saldo/limite da conta Anthropic) nas variaveis de ambiente do Vercel.' }]);
+      } else {
+        setMessages([...newMessages, { role: 'assistant', content: data.content }]);
+      }
     } catch (err) {
       setMessages([...newMessages, { role: 'assistant', content: 'Erro de conexao. Tente novamente.' }]);
     }
