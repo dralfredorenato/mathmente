@@ -27,7 +27,7 @@ const SUBJECTS = {
       { label: '💡 Explicar', prompt: 'Explique este tema de forma simples, com exemplos do dia a dia. Use passos numerados curtos.' },
       { label: '📝 Exemplo', prompt: 'Me de um exemplo pratico e resolvido passo a passo deste tema. Use numeros simples.' },
       { label: '🧠 Hack/Macete', prompt: 'Me ensine o hack ou mnemonico do app para este tema (regra do namoro, elevador, KFC, borboleta, tabela das potencias, "entre quem", PaPoMuDiSuSo ou "troca a letra").' },
-      { label: '🎮 Quiz', prompt: 'Crie um quiz rapido com 3 questoes de multipla escolha sobre este tema. Me de 1 dica antes da resposta. Formate bem.' },
+      { label: '✏️ Novos Exercicios', prompt: 'Crie 3 NOVOS exercicios de multipla escolha (4 alternativas) que eu ainda NAO vi nesta conversa. Misture este tema com outros topicos de matematica do T2 (inteiros, racionais, potencias, raizes, expressoes) e use alternativas/distratores novos e plausiveis. De 1 dica antes de cada resposta e o gabarito comentado no final.' },
       { label: '🐢 Mais devagar', prompt: 'Explique este tema de um jeito ainda mais simples, como se eu tivesse 10 anos.' },
       { label: '📋 Resumo', prompt: 'Faca um resumo super curto (maximo 5 linhas) dos pontos mais importantes deste tema.' }
     ],
@@ -58,7 +58,7 @@ const SUBJECTS = {
       { label: '💡 Explicar', prompt: 'Explique este tema de portugues de forma simples, com exemplos do dia a dia. Use passos numerados curtos.' },
       { label: '📝 Exemplo', prompt: 'Me de exemplos praticos deste tema usando frases simples do cotidiano. Destaque as palavras importantes.' },
       { label: '🧠 Macete', prompt: 'Me de um macete ou dica mnemonica para lembrar esta regra de portugues facilmente.' },
-      { label: '🎮 Quiz', prompt: 'Crie um quiz no formato da prova: 3 questoes objetivas com 4 alternativas (a, b, c, d) sobre este tema. Formate bem e diga a resposta depois.' },
+      { label: '✏️ Novos Exercicios', prompt: 'Crie 3 NOVOS exercicios objetivos (4 alternativas a, b, c, d) que eu ainda NAO vi nesta conversa. Misture este tema com outros topicos de portugues do T1 e use alternativas novas e plausiveis. Diga a resposta comentada depois.' },
       { label: '📝 Esquematica', prompt: 'Crie uma questao esquematica (preencher, ligar, completar) sobre este tema, no estilo da prova do 7o ano.' },
       { label: '✍️ Discursiva', prompt: 'Crie uma questao discursiva-argumentativa sobre este tema e me ajude a montar uma resposta passo a passo. Essa e a questao que vale mais na prova (peso 0,6)!' },
       { label: '🐢 Mais devagar', prompt: 'Explique este tema de um jeito ainda mais simples, como se eu tivesse 10 anos.' },
@@ -94,7 +94,7 @@ const SUBJECTS = {
       { label: '💡 Explicar', prompt: 'Explique este tema de historia de forma simples, com uma linha do tempo visual. Use passos numerados curtos.' },
       { label: '📝 Exemplo', prompt: 'Me de exemplos concretos e curiosidades sobre este periodo historico. Use comparacoes com coisas do dia a dia para facilitar.' },
       { label: '🧠 Macete', prompt: 'Me de um macete ou dica mnemonica para lembrar as datas e nomes importantes deste tema.' },
-      { label: '🎮 Quiz', prompt: 'Crie um quiz rapido com 3 questoes de multipla escolha sobre este tema de historia. Formate bem com 4 alternativas cada.' },
+      { label: '✏️ Novos Exercicios', prompt: 'Crie 3 NOVOS exercicios de multipla escolha (4 alternativas) que eu ainda NAO vi nesta conversa. Misture este tema com outros topicos de historia do T1 (do Imperio Romano ao Mundo Medieval) e use alternativas novas e plausiveis. Inclua gabarito comentado no final.' },
       { label: '📅 Linha do Tempo', prompt: 'Monte uma linha do tempo visual e resumida dos eventos mais importantes deste tema, com datas e o que aconteceu em cada uma.' },
       { label: '🔗 Causa e Efeito', prompt: 'Explique as relacoes de CAUSA e EFEITO deste tema. O que causou o que? Use setas ou numeracao para ficar claro.' },
       { label: '🐢 Mais devagar', prompt: 'Explique este tema de um jeito ainda mais simples, como se eu tivesse 10 anos. Use uma historia ou analogia.' },
@@ -130,7 +130,7 @@ const SUBJECTS = {
       { label: '💡 Explicar', prompt: 'Explique este tema de ciencias de forma simples, com exemplos do dia a dia. Use passos numerados curtos.' },
       { label: '📝 Exemplo', prompt: 'Me de um exemplo pratico do cotidiano que mostre este fenomeno (tipo geladeira, brisa do mar, carro no sol). Explique o porque.' },
       { label: '🧠 Analogia', prompt: 'Me de uma analogia ou macete do dia a dia para nunca mais esquecer este conceito de ciencias.' },
-      { label: '🎮 Quiz', prompt: 'Crie um quiz rapido com 3 questoes de multipla escolha sobre este tema. Me de 1 dica antes da resposta. Formate bem.' },
+      { label: '✏️ Novos Exercicios', prompt: 'Crie 3 NOVOS exercicios de multipla escolha (4 alternativas) que eu ainda NAO vi nesta conversa. Misture este tema com outros topicos do projeto (termodinamica, atmosfera, oceanos, efeito estufa, sustentabilidade) e use alternativas/distratores novos e plausiveis. De 1 dica antes da resposta e o gabarito comentado no final.' },
       { label: '🗂️ Mapa Mental', prompt: 'Monte um mapa mental curto deste tema, ligando causa e efeito (ex: o que causa o que no clima).' },
       { label: '🐢 Mais devagar', prompt: 'Explique este tema de um jeito ainda mais simples, como se eu tivesse 10 anos.' },
       { label: '📋 Resumo', prompt: 'Faca um resumo super curto (maximo 5 linhas) com os Conceitos-Chave mais importantes deste tema.' }
@@ -157,7 +157,7 @@ function getContextualSuggestions(lastAssistantMessage, selectedTopic, messageCo
 
   // If topic is selected, offer topic-specific actions
   if (selectedTopic) {
-    suggestions.push({ label: '🎮 Quiz sobre isso', prompt: 'Crie um quiz rapido de 3 questoes sobre o que voce acabou de explicar. Multipla escolha com 4 alternativas.' });
+    suggestions.push({ label: '✏️ Exercicios sobre isso', prompt: 'Crie 3 NOVOS exercicios de multipla escolha (4 alternativas) sobre o que voce acabou de explicar, misturando com outros temas da materia e usando alternativas novas. Nao repita exercicios anteriores.' });
     suggestions.push({ label: '🧠 Macete', prompt: 'Me de um macete ou dica para memorizar o que voce acabou de explicar.' });
   }
 
@@ -167,8 +167,8 @@ function getContextualSuggestions(lastAssistantMessage, selectedTopic, messageCo
     if (msg.includes('exemplo') || msg.includes('passo')) {
       suggestions.push({ label: '📝 Outro exemplo', prompt: 'Me de mais um exemplo diferente sobre esse mesmo assunto.' });
     }
-    if (msg.includes('quiz') || msg.includes('alternativa') || msg.includes('resposta')) {
-      suggestions.push({ label: '🎯 Mais questoes', prompt: 'Crie mais 3 questoes diferentes sobre o mesmo tema, aumentando um pouco a dificuldade.' });
+    if (msg.includes('quiz') || msg.includes('exercicio') || msg.includes('alternativa') || msg.includes('resposta')) {
+      suggestions.push({ label: '🎯 Mais exercicios', prompt: 'Crie mais 3 NOVOS exercicios diferentes dos anteriores, misturando temas da materia e usando alternativas novas. Aumente um pouco a dificuldade.' });
       suggestions.push({ label: '✅ Corrigir', prompt: 'Me explique a resposta correta de cada questao e por que as outras alternativas estao erradas.' });
     }
     if (msg.includes('resumo') || msg.includes('pontos')) {
