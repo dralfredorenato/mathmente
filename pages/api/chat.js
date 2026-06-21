@@ -29,7 +29,7 @@ export default async function handler(req, res) {
       }));
 
       const response = await client.messages.create({
-              model: process.env.ANTHROPIC_MODEL || 'claude-opus-4-8',
+              model: process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5',
               max_tokens: 8192,
               system: systemPrompt,
               messages: anthropicMessages
