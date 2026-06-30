@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import { BANCO_T2 } from '../lib/bancoT2';
+import { PLANO_RECUPERACAO } from '../lib/planoRecuperacao';
 
 // ============================
 // SUBJECT CONFIGURATIONS
@@ -387,6 +388,156 @@ function ExerciseView({ onBack, onAskAI }) {
 // STUDENT VIEW
 // ============================
 
+function PlanoRecuperacaoView({ config, onBack, onPraticar }) {
+  const [diaAberto, setDiaAberto] = useState(1);
+  const [feitos, setFeitos] = useState({});
+  const plano = PLANO_RECUPERACAO;
+
+  const card = (r, i) => {
+    const cores = {
+      ok: { bg: '#dcfce7', bd: '#15803d', selo: '#15803d' },
+      cuidado: { bg: '#fee2e2', bd: '#dc2626', selo: '#dc2626' },
+      truque: { bg: '#fef3c7', bd: '#b45309', selo: '#b45309' }
+    }[r.tipo];
+    return (
+      <div key={i} style={{ background: cores.bg, border: '2px solid ' + cores.bd, borderRadius: 14, padding: '16px 16px 12px', margin: '12px 0', position: 'relative' }}>
+        <span style={{ position: 'absolute', top: -11, left: 14, background: cores.selo, color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 999, textTransform: 'uppercase' }}>{r.selo}</span>
+        {r.linhas.map((l, j) => (
+          <div key={j} style={{ fontFamily: 'monospace', fontSize: 16, fontWeight: 700, textAlign: 'center', margin: '6px 0', color: '#241c3a' }}>{l}</div>
+        ))}
+        <div style={{ fontSize: 13, textAlign: 'center', color: '#241c3a' }}>{r.legenda}</div>
+      </div>
+    );
+  };
+
+  return (
+    <div>
+      <div style={{ background: config.colors.header, padding: '16px 20px', color: '#fff', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button onClick={onBack} style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none', borderRadius: 12, padding: '8px 14px', fontSize: 14, cursor: 'pointer', fontWeight: 700 }}>← Voltar</button>
+        <h1 style={{ margin: 0, fontSize: 20 }}>🚀 Plano de Recuperacao - 7 dias</h1>
+      </div>
+
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '16px 14px 80px' }}>
+        {/* Intro */}
+        <div style={{ background: 'linear-gradient(135deg, #6C5CE7, #A855F7)', color: '#fff', borderRadius: 22, padding: '22px 20px', marginBottom: 8, boxShadow: '0 10px 30px rgba(108,92,231,0.3)' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', opacity: 0.9 }}>Missao de 7 dias</div>
+          <h2 style={{ fontSize: 24, margin: '6px 0 8px' }}>Bora dominar a matematica! 🚀</h2>
+          <p style={{ fontSize: 15, opacity: 0.95, margin: 0 }}>{plano.subtitulo}</p>
+          <div style={{ background: 'rgba(255,255,255,0.18)', borderRadius: 12, padding: '8px 12px', marginTop: 12, fontSize: 13 }}>👨‍👧 {plano.comoUsar}</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
+            <span style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.35)', padding: '6px 12px', borderRadius: 999, fontSize: 13, fontWeight: 700 }}>☀️🌙 2 sessoes/dia</span>
+            <span style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.35)', padding: '6px 12px', borderRadius: 999, fontSize: 13, fontWeight: 700 }}>✏️ 30 exercicios</span>
+          </div>
+        </div>
+
+        {/* Estrelas de progresso */}
+        <div style={{ background: '#fff', border: '1px solid #e7e1f0', borderRadius: 18, padding: 14, margin: '14px 0' }}>
+          <div style={{ fontSize: 13, color: '#6C5CE7', fontWeight: 700, textTransform: 'uppercase', marginBottom: 10 }}>⭐ Minha missao (toque pra marcar)</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {plano.dias.map(d => (
+              <div key={d.dia} onClick={() => setFeitos(f => ({ ...f, [d.dia]: !f[d.dia] }))} style={{ flex: 1, textAlign: 'center', padding: '8px 2px', borderRadius: 12, background: feitos[d.dia] ? '#dcfce7' : '#ede9fe', border: feitos[d.dia] ? '2px solid #15803d' : '2px solid transparent', cursor: 'pointer', fontSize: 18, userSelect: 'none' }}>
+                {feitos[d.dia] ? '★' : '☆'}
+                <div style={{ fontSize: 9, fontWeight: 700, color: '#241c3a', marginTop: 2 }}>{d.quando.slice(0, 3).toUpperCase()}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Dias */}
+        {plano.dias.map(d => {
+          const aberto = diaAberto === d.dia;
+          return (
+            <div key={d.dia} style={{ background: '#fff', border: '1px solid #e7e1f0', borderRadius: 20, marginTop: 14, overflow: 'hidden', boxShadow: '0 4px 14px rgba(60,30,120,0.08)' }}>
+              <div onClick={() => setDiaAberto(aberto ? 0 : d.dia)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 18px', cursor: 'pointer', background: 'linear-gradient(100deg, #ede9fe, #fff)' }}>
+                <div style={{ flexShrink: 0, width: 48, height: 48, borderRadius: 14, background: d.cor, color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
+                  <small style={{ fontSize: 9, opacity: 0.85 }}>DIA</small>
+                  <b style={{ fontSize: 22 }}>{d.dia}</b>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, color: d.cor, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>{d.quando}{d.prioridade ? ' · ⭐ tema-chave' : ''}</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: '#241c3a', marginTop: 2 }}>{d.emoji} {d.tema}</div>
+                </div>
+                <div style={{ fontSize: 20, color: d.cor, transform: aberto ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</div>
+              </div>
+
+              {aberto && (
+                <div style={{ padding: '4px 18px 20px' }}>
+                  {/* Regras */}
+                  {(d.regras || []).map((r, i) => card(r, i))}
+
+                  {/* Mnemonico */}
+                  {d.mnemo && (
+                    <div style={{ background: 'linear-gradient(120deg, #fff, #ede9fe)', border: '2px dashed #6C5CE7', borderRadius: 16, padding: '14px 16px', margin: '12px 0', display: 'flex', gap: 12, alignItems: 'center' }}>
+                      <div style={{ fontSize: 28, flexShrink: 0 }}>{d.mnemo.icone}</div>
+                      <div>
+                        <b style={{ color: '#6C5CE7', display: 'block', fontSize: 15, marginBottom: 2 }}>{d.mnemo.titulo}</b>
+                        <span style={{ fontSize: 13 }}>{d.mnemo.texto}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Papo falado: pai le, ela responde (treina a fala, ponto fraco da Q6) */}
+                  {d.papoFalado && (
+                    <div style={{ background: '#fff7ed', border: '2px solid #fb923c', borderRadius: 16, padding: '14px 16px', margin: '12px 0' }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#c2410c', textTransform: 'uppercase', marginBottom: 8 }}>🗣️ Falar juntos (nao precisa escrever)</div>
+                      <div style={{ fontSize: 14, marginBottom: 6 }}>👨 {d.papoFalado.pergunta}</div>
+                      <div style={{ fontSize: 14, color: '#15803d', fontWeight: 600 }}>👧 {d.papoFalado.resposta}</div>
+                    </div>
+                  )}
+
+                  {/* Erro antes/depois */}
+                  {d.erro && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, margin: '12px 0' }}>
+                      <div style={{ background: '#fee2e2', border: '2px solid #dc2626', borderRadius: 14, padding: 12 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', marginBottom: 6 }}>❌ Na prova</div>
+                        <div style={{ fontSize: 13 }}>{d.erro.x}</div>
+                      </div>
+                      <div style={{ background: '#dcfce7', border: '2px solid #15803d', borderRadius: 14, padding: 12 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#15803d', textTransform: 'uppercase', marginBottom: 6 }}>✅ O certo</div>
+                        <div style={{ fontSize: 13 }}>{d.erro.v}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Checklist do simulado */}
+                  {d.checklist && (
+                    <div style={{ background: '#dcfce7', border: '2px solid #15803d', borderRadius: 14, padding: '14px 16px', margin: '12px 0' }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#15803d', textTransform: 'uppercase', marginBottom: 8 }}>✅ Checklist da prova</div>
+                      {d.checklist.map((c, i) => <div key={i} style={{ fontSize: 13, marginBottom: 4 }}>☐ {c}</div>)}
+                    </div>
+                  )}
+
+                  {/* Sessoes manha / noite */}
+                  <div style={{ background: '#fffdf5', border: '2px solid #fcd34d', borderRadius: 14, padding: '12px 14px', margin: '12px 0' }}>
+                    <span style={{ display: 'inline-block', background: '#fcd34d', color: '#854d0e', fontSize: 13, fontWeight: 700, padding: '4px 12px', borderRadius: 999, marginBottom: 6 }}>☀️ Manha · {d.manha.qtd} exercicios</span>
+                    <div style={{ fontSize: 13 }}>{d.manha.foco}</div>
+                  </div>
+                  <div style={{ background: '#f5f6ff', border: '2px solid #818cf8', borderRadius: 14, padding: '12px 14px', margin: '12px 0' }}>
+                    <span style={{ display: 'inline-block', background: '#818cf8', color: '#fff', fontSize: 13, fontWeight: 700, padding: '4px 12px', borderRadius: 999, marginBottom: 6 }}>🌙 Noite · {d.noite.qtd} exercicios</span>
+                    <div style={{ fontSize: 13 }}>{d.noite.foco}</div>
+                  </div>
+
+                  {/* Botao praticar */}
+                  {!d.simulado && d.manha.topicId && (
+                    <button onClick={() => onPraticar(d.manha.topicId)} style={{ width: '100%', background: d.cor, color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontSize: 15, fontWeight: 700, cursor: 'pointer', marginTop: 8 }}>
+                      ✏️ Praticar este tema agora
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        <div style={{ textAlign: 'center', marginTop: 28, padding: '24px 18px', background: 'linear-gradient(135deg, #dcfce7, #ede9fe)', borderRadius: 20 }}>
+          <h2 style={{ color: '#6C5CE7', fontSize: 20, marginBottom: 6 }}>Voce consegue! 💜</h2>
+          <p style={{ fontSize: 14, margin: 0 }}>Um dia de cada vez, um assunto de cada vez. Cada estrela e uma vitoria.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StudentView({ subject, onBack, studentName }) {
   const config = SUBJECTS[subject];
   const nameContext = studentName ? ' O(a) aluno(a) se chama ' + studentName + '.' : '';
@@ -398,6 +549,7 @@ function StudentView({ subject, onBack, studentName }) {
   const [pomodoroActive, setPomodoroActive] = useState(false);
   const [pomodoroTime, setPomodoroTime] = useState(25 * 60);
   const [showExercises, setShowExercises] = useState(false);
+  const [showPlano, setShowPlano] = useState(false);
   const [parentNotes, setParentNotes] = useState([]);
   const [showNotes, setShowNotes] = useState(false);
   const chatEndRef = useRef(null);
@@ -470,6 +622,22 @@ function StudentView({ subject, onBack, studentName }) {
 
   const xpLevel = xp < 10 ? 'Curiosa' : xp < 25 ? 'Persistente' : xp < 50 ? 'Guerreira' : 'Mestre dos Estudos';
 
+  if (showPlano && subject === 'math') {
+    return (
+      <div style={{ minHeight: '100vh', background: config.colors.bg, fontFamily: "'Nunito', sans-serif" }}>
+        <Head>
+          <title>{config.tutorName} - Plano de Recuperacao</title>
+          <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+        </Head>
+        <PlanoRecuperacaoView
+          config={config}
+          onBack={() => setShowPlano(false)}
+          onPraticar={(topicId) => { const t = config.topics.find(x => x.id === topicId); if (t) { setShowPlano(false); setSelectedTopic(t); setShowExercises(true); } }}
+        />
+      </div>
+    );
+  }
+
   if (showExercises && subject === 'math') {
     return (
       <div style={{ minHeight: '100vh', background: config.colors.bg, fontFamily: "'Nunito', sans-serif" }}>
@@ -522,6 +690,11 @@ function StudentView({ subject, onBack, studentName }) {
         {subject === 'math' && (
           <button onClick={() => setShowExercises(true)} style={{ background: '#10B981', color: '#fff', border: 'none', borderRadius: 20, padding: '6px 16px', fontSize: 13, cursor: 'pointer' }}>
             📚 Exercicios
+          </button>
+        )}
+        {subject === 'math' && (
+          <button onClick={() => setShowPlano(true)} style={{ background: '#6C5CE7', color: '#fff', border: 'none', borderRadius: 20, padding: '6px 16px', fontSize: 13, cursor: 'pointer', fontWeight: 700 }}>
+            🚀 Plano 7 dias
           </button>
         )}
       </div>
